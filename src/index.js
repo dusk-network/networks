@@ -231,6 +231,9 @@ const ROUTE_NAMES = Object.freeze({
   migrate: (route) => route.kind === "migration",
 });
 
+/** A Dusk account, base58, as the schema writes one. */
+const ACCOUNT = /^[1-9A-HJ-NP-Za-km-z]{100,140}$/;
+
 /** Every route ID on any network, so a name none has reads as a mistake. */
 const ALL_ROUTE_IDS = new Set(
   Object.values(networks).flatMap((network) => routes(network).map((r) => r.id))
@@ -242,8 +245,8 @@ const ALL_ROUTE_IDS = new Set(
  * wallet's Migrate hands its own account over. `route` is a route's ID
  * ("bsc-to-dusk") or one of the bridge's names for one ("bsc", "ethereum",
  * "duskevm", "migrate"). The bridge takes `to` on a route that pays a Dusk
- * account. Null while the network's bridge has no published address, or
- * when the network has no such route.
+ * account; anything but a Dusk account throws. Null while the network's
+ * bridge has no published address, or when the network has no such route.
  *
  * @param {import("./index.js").Network | number | bigint | string} net
  * @param {{ route: string, to?: string }} options
@@ -259,8 +262,8 @@ export function bridgeLink(net, { route, to = "" }) {
 
   const account = typeof to === "string" ? to.trim() : "";
 
-  if (account && !/^[1-9A-HJ-NP-Za-km-z]+$/.test(account)) {
-    throw new TypeError("The recipient is a base58 Dusk account");
+  if (account && !ACCOUNT.test(account)) {
+    throw new TypeError("The recipient isn't a Dusk account");
   }
 
   const bridge = network.apps.bridge;

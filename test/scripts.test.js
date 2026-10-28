@@ -114,6 +114,18 @@ describe("the schema check", () => {
     assert.throws(() => validate({ $ref: "#/$defs/missing" }, "x"), /missing/);
   });
 
+  it("compares items, and constants, whatever order their keys are in", () => {
+    const unique = { items: { type: "object" }, type: "array", uniqueItems: true };
+
+    assert.deepEqual(validate(unique, [{ a: 1, b: [1, { c: 2, d: 3 }] }, { b: [1, { d: 3, c: 2 }], a: 1 }]), [
+      "$: items repeat",
+    ]);
+    assert.deepEqual(validate(unique, [{ a: 1, b: 2 }, { a: 2, b: 1 }]), []);
+    assert.deepEqual(validate({ const: { a: 1, b: 2 } }, { b: 2, a: 1 }), []);
+    assert.deepEqual(validate({ enum: [{ a: 1, b: 2 }] }, { b: 2, a: 1 }), []);
+    assert.equal(validate({ const: { a: 1, b: 2 } }, { a: 1, b: 3 }).length, 1);
+  });
+
   it("checks references, options and extra keys", () => {
     const schema = {
       $defs: { id: { pattern: "^[0-9a-f]{4}$", type: "string" } },
@@ -211,34 +223,41 @@ describe("gen-duskevm", () => {
   /**
    * A duskevm-genesis checkout with a few contracts, in a folder of its own.
    *
-   * @param {{ l1ChainId?: number, deposit?: string }} [options]
+   * @param {{ l1ChainId?: number, deposit?: string, drop?: string[] }} [options]
+   *   `drop` leaves out these keys, from the contracts and from rollup.json
    */
-  function genesis({ l1ChainId = 2, deposit = PORTAL } = {}) {
+  function genesis({ l1ChainId = 2, deposit = PORTAL, drop = [] } = {}) {
     const dir = mkdtempSync(join(tmpdir(), "networks-genesis-"));
     const contract = (id, evm) => ({ contract_id: id.repeat(32), evm_address: evm, wasm: "x.wasm" });
+    /** @type {Record<string, unknown>} */
+    const contracts = {
+      brand_new_contract: contract("cd", "0x00000000000000000000000000000000000000cd"),
+      optimism_portal: contract("ab", PORTAL),
+      system_config: contract("ef", SYSTEM_CONFIG),
+      transparent_proxy: contract("ef", "0xdc05b5507fb495b6729854bdcdffbcae110ef98b"),
+    };
+    /** @type {Record<string, unknown>} */
+    const rollup = {
+      deposit_contract_address: deposit,
+      l1_chain_id: l1ChainId,
+      l1_system_config_address: SYSTEM_CONFIG,
+      l2_chain_id: 745,
+    };
+
+    for (const key of drop) {
+      delete contracts[key];
+      delete rollup[key];
+    }
 
     mkdirSync(join(dir, "testnet"));
     writeFileSync(
       join(dir, "testnet", "l1-addresses.json"),
       JSON.stringify({
-        contracts: {
-          brand_new_contract: contract("cd", "0x00000000000000000000000000000000000000cd"),
-          optimism_portal: contract("ab", PORTAL),
-          system_config: contract("ef", SYSTEM_CONFIG),
-          transparent_proxy: contract("ef", "0xdc05b5507fb495b6729854bdcdffbcae110ef98b"),
-        },
+        contracts,
         metadata: { proxy_forwarded_event_schemas: [{ proxy_contract_id: "ef".repeat(32), proxy_contract_key: "system_config" }] },
       })
     );
-    writeFileSync(
-      join(dir, "testnet", "rollup.json"),
-      JSON.stringify({
-        deposit_contract_address: deposit,
-        l1_chain_id: l1ChainId,
-        l1_system_config_address: SYSTEM_CONFIG,
-        l2_chain_id: 745,
-      })
-    );
+    writeFileSync(join(dir, "testnet", "rollup.json"), JSON.stringify(rollup));
 
     return {
       dir,
@@ -284,6 +303,25 @@ describe("gen-duskevm", () => {
       ]);
     } finally {
       checkout.remove();
+    }
+  });
+
+  it("refuses a checkout that lacks the portal or the system config, on either side", () => {
+    for (const drop of [
+      ["deposit_contract_address", "optimism_portal"],
+      ["l1_system_config_address", "system_config", "transparent_proxy"],
+      ["deposit_contract_address"],
+      ["system_config", "transparent_proxy"],
+      // Nothing at all: it would have made an empty contract set.
+      ["deposit_contract_address", "l1_system_config_address", "brand_new_contract", "optimism_portal", "system_config", "transparent_proxy"],
+    ]) {
+      const checkout = genesis({ drop });
+
+      try {
+        assert.throws(() => generate(checkout.dir, "testnet", networks.testnet), undefined, drop.join(", "));
+      } finally {
+        checkout.remove();
+      }
     }
   });
 

@@ -375,6 +375,19 @@ describe("reading what an account has with Sozu", () => {
     assert.deepEqual(status.position, { balance: 21n, stDusk: 7n });
   });
 
+  it("reads a stDUSK balance it has no token for as unknown, not as none", async () => {
+    const status = await readSozuStatus({
+      account: ACCOUNT,
+      contracts: { hub: HUB, pool: POOL, substrate: SUBSTRATE },
+      named: new Map(),
+      read: chainOf({ names: { "staked-dusk": null } }).read,
+    });
+
+    assert.deepEqual(status.position, { balance: 21n, stDusk: null });
+    assert.equal(status.contracts.stDusk, null);
+    assert.match(status.error, /aren't known/);
+  });
+
   it("reads a switch it can't make sense of as unknown, not off", async () => {
     const status = await readSozuStatus({
       contracts,

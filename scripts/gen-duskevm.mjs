@@ -61,7 +61,31 @@ const fail = (message) => {
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
-const sameAddress = (a, b) => String(a).toLowerCase() === String(b).toLowerCase();
+const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+
+/**
+ * The rollup's record of a contract must be the address book's: both there,
+ * and the same address. Else the two files aren't one set.
+ *
+ * @param {string} name The network
+ * @param {string} field rollup.json's field
+ * @param {unknown} fromRollup
+ * @param {string} key l1-addresses.json's contract
+ * @param {unknown} fromBook
+ */
+function sameContract(name, field, fromRollup, key, fromBook) {
+  if (typeof fromRollup !== "string" || !EVM_ADDRESS.test(fromRollup)) {
+    fail(`${name}: rollup.json has no ${field}`);
+  }
+
+  if (typeof fromBook !== "string" || !EVM_ADDRESS.test(fromBook)) {
+    fail(`${name}: l1-addresses.json has no ${key}`);
+  }
+
+  if (fromRollup.toLowerCase() !== fromBook.toLowerCase()) {
+    fail(`${name}: rollup.json's ${field} isn't l1-addresses.json's ${key}`);
+  }
+}
 
 /**
  * The generated part of one network, from its genesis directory.
@@ -92,9 +116,17 @@ export function generate(genesisDir, name, network) {
     fail(`${name}: rollup.json has no L2 chain ID`);
   }
 
+  if (
+    !addresses.contracts ||
+    typeof addresses.contracts !== "object" ||
+    Object.keys(addresses.contracts).length === 0
+  ) {
+    fail(`${name}: l1-addresses.json lists no contracts`);
+  }
+
   const contracts = {};
 
-  for (const key of Object.keys(addresses.contracts ?? {}).sort()) {
+  for (const key of Object.keys(addresses.contracts).sort()) {
     const { contract_id: id, evm_address: evm } = addresses.contracts[key];
 
     if (!/^[0-9a-f]{64}$/.test(id ?? "")) fail(`${name}: ${key} has no contract ID`);
@@ -104,14 +136,21 @@ export function generate(genesisDir, name, network) {
   }
 
   // The rollup's own record of the portal and the system config must be
-  // the contracts the address book names: else the two files aren't a set.
-  if (!sameAddress(rollup.deposit_contract_address, contracts.optimism_portal?.evmAddress)) {
-    fail(`${name}: rollup.json's deposit contract isn't the optimism_portal`);
-  }
-
-  if (!sameAddress(rollup.l1_system_config_address, contracts.system_config?.evmAddress)) {
-    fail(`${name}: rollup.json's system config isn't the system_config`);
-  }
+  // the contracts the address book names.
+  sameContract(
+    name,
+    "deposit_contract_address",
+    rollup.deposit_contract_address,
+    "optimism_portal",
+    contracts.optimism_portal?.evmAddress
+  );
+  sameContract(
+    name,
+    "l1_system_config_address",
+    rollup.l1_system_config_address,
+    "system_config",
+    contracts.system_config?.evmAddress
+  );
 
   // The L2 genesis, where the checkout has it: the same chain, and the
   // predeploys the file names have code there.

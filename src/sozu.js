@@ -401,7 +401,8 @@ function start(read, id, fnName, args) {
 
 /**
  * The figures, from the contracts `ids` names, all started at once so they
- * go in the query of the moment. Each is null when it couldn't be read.
+ * go in the query of the moment. Each is null when it couldn't be read, as
+ * one from a contract that isn't known is.
  *
  * @param {import("./sozu.js").SozuRead} read
  * @param {import("./sozu.js").SozuContractIds} ids
@@ -426,7 +427,7 @@ function readFigures(read, ids, account) {
   const reads = [
     at(pool, "exchange_rate", new Uint8Array(0), parseFeeRate),
     account ? at(pool, "balance_of", account, decodeU64) : null,
-    account && stDusk ? at(stDusk, "balance_of", account, decodeU64) : 0n,
+    account ? at(stDusk, "balance_of", account, decodeU64) : null,
     at(substrate, "stake_fee_rate", kind("deposit"), parseFeeRate),
     at(substrate, "stake_fee_rate", kind("reward"), parseFeeRate),
     at(substrate, "is_feature_enabled", kind("maintenance"), decodeSwitch),
@@ -452,10 +453,14 @@ function readFigures(read, ids, account) {
         synchronization: /** @type {boolean | null} */ (sync),
       },
       pool: rate ? parsePool(rate) : null,
-      position:
-        typeof balance === "bigint" && typeof staked === "bigint"
-          ? { balance, stDusk: staked }
-          : null,
+      // No balances without an account; with one, each is null when it
+      // couldn't be read, the stDUSK token's too while no one names it.
+      position: account
+        ? {
+            balance: typeof balance === "bigint" ? balance : null,
+            stDusk: typeof staked === "bigint" ? staked : null,
+          }
+        : null,
     };
   });
 }

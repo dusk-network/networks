@@ -36,6 +36,28 @@ const KEYWORDS = new Set([
   "uniqueItems",
 ]);
 
+/**
+ * A value as JSON with every object's keys sorted, so two values JSON
+ * Schema calls equal give the same text whatever order their keys are in.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+
+  if (value && typeof value === "object") {
+    const record = /** @type {Record<string, unknown>} */ (value);
+
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
 /** @param {unknown} value */
 function typeOf(value) {
   if (value === null) return "null";
@@ -98,11 +120,11 @@ export function validate(root, data) {
       }
     }
 
-    if ("const" in schema && JSON.stringify(schema.const) !== JSON.stringify(value)) {
+    if ("const" in schema && canonical(schema.const) !== canonical(value)) {
       errors.push(`${path}: should be ${JSON.stringify(schema.const)}`);
     }
 
-    if (schema.enum && !schema.enum.some((e) => JSON.stringify(e) === JSON.stringify(value))) {
+    if (schema.enum && !schema.enum.some((/** @type {unknown} */ e) => canonical(e) === canonical(value))) {
       errors.push(`${path}: should be one of ${JSON.stringify(schema.enum)}`);
     }
 
@@ -147,7 +169,7 @@ export function validate(root, data) {
         errors.push(`${path}: more than ${schema.maxItems} items`);
       }
       if (schema.uniqueItems) {
-        const seen = value.map((v) => JSON.stringify(v));
+        const seen = value.map(canonical);
 
         if (new Set(seen).size !== seen.length) errors.push(`${path}: items repeat`);
       }

@@ -162,7 +162,9 @@ export declare function routes(net: NetworkRef): ReadonlyArray<Route>;
 
 /**
  * `<bridge>/#/move/<route>?to=<account>`, or null while the bridge has no
- * published address or the network has no such route.
+ * published address or the network has no such route. Throws on a route
+ * name the bridge doesn't know (RangeError), or a `to` that isn't a Dusk
+ * account (TypeError).
  */
 export declare function bridgeLink(
   net: NetworkRef,

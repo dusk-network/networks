@@ -38,11 +38,12 @@ export type SozuStatus = {
   /** "hub" when the hub named all three contracts, else "fallback". */
   source: "hub" | "fallback";
   pool: SozuPool | null;
+  /** Null when no account was given; each balance null when it couldn't be read. */
   position: {
     /** The DUSK the account has with Sozu, as the pool counts it: the Max to unstake. */
-    balance: bigint;
-    /** The account's stDUSK. */
-    stDusk: bigint;
+    balance: bigint | null;
+    /** The account's stDUSK; unknown while the stDUSK token isn't. */
+    stDusk: bigint | null;
   } | null;
   fees: SozuFees | null;
   flags: SozuFlags;

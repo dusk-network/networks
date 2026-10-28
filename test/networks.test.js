@@ -342,6 +342,20 @@ describe("bridgeLink", () => {
     assert.equal(bridgeLink(published(networks.devnet), { route: "migrate" }), null);
   });
 
+  it("hands over only a recipient that is a Dusk account, by the schema's rule", () => {
+    const bridge = published(networks.mainnet);
+
+    assert.equal(schema.$defs.account.pattern, "^[1-9A-HJ-NP-Za-km-z]{100,140}$");
+
+    for (const to of ["abc", "1".repeat(99), "1".repeat(141), `${ACCOUNT.slice(0, -1)}0`]) {
+      assert.throws(() => bridgeLink(bridge, { route: "migrate", to }), TypeError, to);
+    }
+
+    for (const to of ["1".repeat(100), "z".repeat(140)]) {
+      assert.equal(bridgeLink(bridge, { route: "migrate", to }), `https://bridge.example/#/move/migrate?to=${to}`);
+    }
+  });
+
   it("refuses a route the bridge has no name for, and a recipient that isn't base58", () => {
     assert.throws(() => bridgeLink(published(networks.mainnet), { route: "bcs" }), RangeError);
     assert.throws(() => bridgeLink(published(networks.mainnet), { route: "toString" }), RangeError);
