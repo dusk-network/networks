@@ -1,6 +1,6 @@
 {
   "name": "@dusk-network/networks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Dusk's networks for the Dusk apps: endpoints, contracts, routes and labels, with Sozu's rules, reward estimates and shared formats.",
   "license": "MPL-2.0",
   "type": "module",
@@ -24,6 +24,10 @@
     "./format": {
       "types": "./src/format.d.ts",
       "default": "./src/format.js"
+    },
+    "./duskevm": {
+      "types": "./src/duskevm.d.ts",
+      "default": "./src/duskevm.js"
     },
     "./networks/*.json": {
       "types": "./src/network-file.d.ts",

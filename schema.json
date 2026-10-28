@@ -250,12 +250,16 @@
     "duskEvm": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "chainId", "currency", "rpcUrl", "explorerUrl", "blockscoutApiUrl", "predeploys", "drivers", "contracts", "source"],
+      "required": ["name", "chainId", "currency", "rpcUrl", "l1AdapterUrl", "explorerUrl", "blockscoutApiUrl", "predeploys", "drivers", "contracts", "source"],
       "properties": {
         "name": { "description": "The chain's name as wallets list it.", "type": "string", "minLength": 1 },
         "chainId": { "type": "integer", "minimum": 1 },
         "currency": { "$ref": "#/$defs/currency" },
         "rpcUrl": { "$ref": "#/$defs/url" },
+        "l1AdapterUrl": {
+          "description": "The DuskEVM adapter's RPC beside the chain's own. It answers for DuskEVM (its chain ID); the bridge asks it which DuskEVM deposit a Dusk transaction made.",
+          "$ref": "#/$defs/url"
+        },
         "explorerUrl": { "$ref": "#/$defs/url" },
         "blockscoutApiUrl": { "$ref": "#/$defs/url" },
         "predeploys": {

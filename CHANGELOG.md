@@ -2,6 +2,13 @@
 
 All notable changes to this package are listed here. It follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+
+- `/duskevm`: when a DuskEVM withdrawal can be claimed, whether it can be claimed now, and which dispute games a proof can go against
+- `duskEvm.l1AdapterUrl`: the DuskEVM adapter's RPC beside DuskEVM's own
+
 ## [0.1.0]
 
 ### Added

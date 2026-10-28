@@ -28,6 +28,7 @@ The entry points are the same on both, under each registry's name: `@dusk-networ
 | `@dusk-network/networks` | `networks`, `networkFor(chainId)`, `labelFor(net, id)`, `isBlocked(net, account)`, `blockedReason(net, account)`, `routes(net)`, `bridgeLink(net, { route, to })` |
 | `@dusk-network/networks/sozu` | Sozu's fee, stDUSK and minimum rules, its gas, the hub's argument bytes, the reply decoders and `readSozuStatus` |
 | `@dusk-network/networks/rates` | `nativeRateEstimate` and `sozuRateEstimate`, as yearly fractions |
+| `@dusk-network/networks/duskevm` | When a DuskEVM withdrawal can be claimed (`claimFrom`), whether it can be claimed now (`claimReadiness`), the games a proof can go against (`isEligibleGame`), and the contracts' clock |
 | `@dusk-network/networks/format` | `formatDusk`, `formatDuskPlain`, `formatTime`, `formatContractId`, `shortAccount`, `formatEvmAddress` |
 | `@dusk-network/networks/networks/<name>.json` | `mainnet`, `testnet` or `devnet` as data |
 | `@dusk-network/networks/schema.json` | The files' JSON Schema |
@@ -69,6 +70,15 @@ import { SOZU_FN, SOZU_GAS, sozuCall } from "@dusk-network/networks/sozu";
 
 const call = sozuCall(status.contracts.pool, SOZU_FN.STAKE, amount); // { contractId, deposit, fnArgs, fnName }
 const { limit, minimum } = SOZU_GAS[call.fnName]; // warn while typing under the minimum
+```
+
+A DuskEVM withdrawal's claim date comes from the chain: the app reads the proof's dispute game on its hub, the Portal's two delays and Dusk's latest block, and `/duskevm` works out the date as the Portal checks a claim:
+
+```js
+import { claimFrom, claimReadiness } from "@dusk-network/networks/duskevm";
+
+const claim = claimFrom({ provenAt, game, portal, tip }); // { at, exact, overdue }: "about" until the game resolves
+claimReadiness({ claim, portalAccepts, tip }).ready; // the Portal's yes counts from the date only
 ```
 
 The bridge takes a route and a Dusk recipient in its link. `bridgeLink` builds it, and gives null while the network's bridge has no published address:
