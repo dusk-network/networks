@@ -19,3 +19,4 @@ All notable changes to this package are listed here. It follows [Keep a Changelo
 - `/sozu`: Sozu's fee, stDUSK, minimum, unstake and gas rules, and its reads in one query
 - `/rates`: native and Sozu reward-rate estimates
 - `/format`: amounts, times, contract IDs, accounts and EVM addresses
+- Published to npm as `@dusk-network/networks` and to JSR as `@dusk/networks`

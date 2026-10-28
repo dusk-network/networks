@@ -1,4 +1,20 @@
 /**
+ * How the Dusk apps write amounts, times and IDs, with Intl only. The locale
+ * and the time zone default to the browser's.
+ *
+ * @example
+ * ```js
+ * import { formatContractId, formatDusk, formatTime } from "@dusk/networks/format";
+ *
+ * formatDusk(1_853_542n, { round: "up" }); // { text: "0.0019", exact: "0.001853542" }
+ * formatTime(Date.now(), { locale: "nl-NL", timeZone: "Europe/Amsterdam" }); // "Today, 14:05 CET"
+ * formatContractId("0x93DE…", { short: true }); // "93de28…6ce1d4"
+ * ```
+ *
+ * @module
+ */
+
+/**
  * An amount of DUSK from lux. `short` (the default): at most 4 decimals, but
  * 2 significant digits under 0.01, and never 0 for an amount that isn't;
  * `exact`: all 9, trailing zeros trimmed. Round `down` for balances, `up`

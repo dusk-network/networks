@@ -1,0 +1,19 @@
+{
+  "name": "@dusk/networks",
+  "version": "0.1.0",
+  "license": "MPL-2.0",
+  "exports": {
+    ".": "./src/index.js",
+    "./sozu": "./src/sozu.js",
+    "./rates": "./src/rates.js",
+    "./format": "./src/format.js",
+    "./networks/mainnet.json": "./networks/mainnet.json",
+    "./networks/testnet.json": "./networks/testnet.json",
+    "./networks/devnet.json": "./networks/devnet.json",
+    "./schema.json": "./schema.json",
+    "./fixtures/sozu-vectors.json": "./fixtures/sozu-vectors.json"
+  },
+  "publish": {
+    "include": ["CHANGELOG.md", "LICENSE", "README.md", "fixtures", "networks", "schema.json", "src"]
+  }
+}

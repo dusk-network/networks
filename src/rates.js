@@ -1,3 +1,4 @@
+/* @ts-self-types="./rates.d.ts" */
 /**
  * Staking reward rates, from one read of the node's provisioners and a few
  * constants: simple yearly rates for the network as a whole, as fractions.

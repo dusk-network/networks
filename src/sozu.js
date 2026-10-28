@@ -1,3 +1,4 @@
+/* @ts-self-types="./sozu.d.ts" */
 /**
  * Sozu's rules as its contracts (v1.0.0) apply them, and its reads. Amounts
  * are lux, as bigints. Every argument but the account is fixed bytes here
@@ -7,6 +8,13 @@
  */
 
 import { fromHex, toHex } from "./hex.js";
+
+/** @typedef {import("./sozu.js").SozuContractIds} SozuContractIds */
+/** @typedef {import("./sozu.js").SozuFeeRate} SozuFeeRate */
+/** @typedef {import("./sozu.js").SozuNamed} SozuNamed */
+/** @typedef {import("./sozu.js").SozuRead} SozuRead */
+/** @typedef {import("./sozu.js").SozuStart} SozuStart */
+/** @typedef {import("./sozu.js").SozuStatus} SozuStatus */
 
 /** Lux in one DUSK, and in one stDUSK. */
 const ONE = 1_000_000_000n;
@@ -348,7 +356,7 @@ const NAMES = Object.freeze(
  * What each hub named last, and whether the hub named it: where the next
  * read takes the figures from.
  *
- * @type {Map<string, import("./sozu.js").SozuNamed>}
+ * @type {Map<string, SozuNamed>}
  */
 const namedLast = new Map();
 
@@ -373,7 +381,7 @@ const contractIdOf = (id) => {
  * A read through the app's `read`, started now: one that throws at once is
  * a read that failed.
  *
- * @param {import("./sozu.js").SozuRead} read
+ * @param {SozuRead} read
  * @param {string} id
  * @param {string} fnName
  * @param {Uint8Array} args
@@ -387,8 +395,8 @@ const start = (read, id, fnName, args) =>
  * go in the query of the moment. Each is null when it couldn't be read, as
  * one from a contract that isn't known is.
  *
- * @param {import("./sozu.js").SozuRead} read
- * @param {import("./sozu.js").SozuContractIds} ids
+ * @param {SozuRead} read
+ * @param {SozuContractIds} ids
  * @param {Uint8Array | null} account
  */
 function readFigures(read, ids, account) {
@@ -427,8 +435,8 @@ function readFigures(read, ids, account) {
       fees:
         deposit && reward
           ? {
-              deposit: /** @type {import("./sozu.js").SozuFeeRate} */ (deposit),
-              reward: /** @type {import("./sozu.js").SozuFeeRate} */ (reward),
+              deposit: /** @type {SozuFeeRate} */ (deposit),
+              reward: /** @type {SozuFeeRate} */ (reward),
             }
           : null,
       flags: {
@@ -462,16 +470,16 @@ function readFigures(read, ids, account) {
  * or can't answer now, keeps the one it named last.
  *
  * @param {{
- *   read: import("./sozu.js").SozuRead,
- *   contracts: import("./sozu.js").SozuStart,
+ *   read: SozuRead,
+ *   contracts: SozuStart,
  *   account?: Uint8Array | null,
- *   named?: Map<string, import("./sozu.js").SozuNamed>,
+ *   named?: Map<string, SozuNamed>,
  * }} options `contracts` are the hub and the fallbacks: a network's `sozu`
  *   as it is, or `{ hub, pool, stDusk, substrate }`; `account` is
  *   `balance_of`'s argument, as the pool's data driver encodes the account,
  *   or null to read no balances; `named` keeps what each hub named last
  *   (one map for the app, by default).
- * @returns {Promise<import("./sozu.js").SozuStatus>}
+ * @returns {Promise<SozuStatus>}
  */
 export async function readSozuStatus({
   read,
@@ -490,7 +498,7 @@ export async function readSozuStatus({
     "fallbacks" in contracts && contracts.fallbacks
       ? contracts.fallbacks
       : /** @type {Record<string, unknown>} */ (contracts);
-  const fallback = /** @type {import("./sozu.js").SozuContractIds} */ (
+  const fallback = /** @type {SozuContractIds} */ (
     Object.fromEntries(NAMES.map(([key]) => [key, contractIdOf(known[key])]))
   );
   const held = named.get(hub);

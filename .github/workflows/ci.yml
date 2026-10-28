@@ -20,7 +20,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: latest
+      - run: npm run check:versions
       - run: npm run validate
       - run: npm test
       - run: npm run typecheck
+      # What the publish workflow sends to JSR, checked with the same CLI.
+      - run: npm run check:jsr
       - run: node scripts/gen-duskevm.mjs duskevm-genesis --check

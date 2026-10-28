@@ -1,3 +1,4 @@
+/* @ts-self-types="./format.d.ts" */
 /**
  * How the apps write amounts, times and IDs, with Intl only. The locale and
  * the zone default to the browser's.
