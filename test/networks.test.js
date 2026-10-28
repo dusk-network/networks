@@ -203,13 +203,15 @@ describe("the network files", () => {
     }
   });
 
-  it("know where the wallet and the explorer are, and not yet the bridge", () => {
+  it("know where the wallet, the explorer and the bridge are", () => {
     assert.deepEqual(networks.mainnet.apps, {
-      bridge: null,
+      bridge: "https://bridge.dusk.network",
       explorer: "https://apps.dusk.network/explorer",
       wallet: "https://apps.dusk.network/wallet",
     });
     assert.equal(networks.testnet.apps.wallet, "https://apps.testnet.dusk.network/wallet");
+    assert.equal(networks.testnet.apps.bridge, "https://bridge.testnet.dusk.network");
+    assert.equal(networks.devnet.apps.bridge, null);
     assert.equal(networks.devnet.apps.explorer, "https://apps.devnet.dusk.network/explorer");
   });
 
@@ -321,7 +323,8 @@ describe("bridgeLink", () => {
   });
 
   it("is null while the bridge has no published address", () => {
-    assert.equal(bridgeLink(networks.mainnet, { route: "bsc", to: ACCOUNT }), null);
+    assert.equal(bridgeLink(networks.devnet, { route: "bsc", to: ACCOUNT }), null);
+    assert.equal(bridgeLink(networks.mainnet, { route: "bsc", to: ACCOUNT }), `https://bridge.dusk.network/#/move/bsc?to=${ACCOUNT}`);
   });
 
   it("opens the bridge on a route, and hands over a Dusk recipient", () => {

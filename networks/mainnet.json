@@ -10,7 +10,7 @@
   "apps": {
     "wallet": "https://apps.dusk.network/wallet",
     "explorer": "https://apps.dusk.network/explorer",
-    "bridge": null
+    "bridge": "https://bridge.dusk.network"
   },
   "contracts": {
     "transfer": "0100000000000000000000000000000000000000000000000000000000000000",
