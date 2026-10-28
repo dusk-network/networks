@@ -56,6 +56,8 @@ export type DuskEvm = ChainFields &
   Readonly<{
     /** The chain's name as wallets list it. */
     name: string;
+    /** The DuskEVM adapter's RPC beside the chain's own, which the bridge asks which DuskEVM deposit a Dusk transaction made. */
+    l1AdapterUrl: string;
     blockscoutApiUrl: string;
     predeploys: Readonly<{
       l1Block: EvmAddress;

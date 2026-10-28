@@ -5,6 +5,7 @@ import { HUB_NAME_ARGS, SOZU_GAS, readSozuStatus, sozuStake, type SozuStatus } f
 import { nativeRateEstimate, sozuRateEstimate } from "@dusk-network/networks/rates";
 import { formatDusk, formatEvmAddress, formatTime, shortAccount } from "@dusk-network/networks/format";
 import testnet from "@dusk-network/networks/networks/testnet.json" with { type: "json" };
+import { GAME_STATUS, claimFrom, claimReadiness, isEligibleGame, type ClaimDate } from "@dusk-network/networks/duskevm";
 
 const net: Network | null = networkFor(2);
 const same: Network = testnet;
@@ -29,6 +30,11 @@ const time: string = formatTime(Date.now(), { date: "full", seconds: true, local
 const evm: `0x${string}` = formatEvmAddress("0x" + "ab".repeat(20));
 const short: string = shortAccount("abc");
 const duskEvmChain: number | undefined = net?.duskEvm?.chainId;
-void [fromNetwork, same, label, blocked, link, gas, arg, ok, status, sozu, text, exact, time, evm, short, duskEvmChain];
+const adapter: string | undefined = net?.duskEvm?.l1AdapterUrl;
+const tipNow = { height: 1n, timestamp: 2n };
+const claim: ClaimDate = claimFrom({ game: { createdAt: 1n, maxClockDuration: 2n, resolvedAt: 0n, status: GAME_STATUS.IN_PROGRESS }, portal: { disputeGameFinalityDelaySeconds: 1n, proofMaturityDelaySeconds: 1n }, provenAt: null, tip: tipNow });
+const readyAt: bigint | null = claimReadiness({ claim, portalAccepts: false, tip: tipNow }).readyAt;
+const eligible: boolean = isEligibleGame({ createdAt: 1n, l2BlockNumber: 1n, proper: null, respected: true, status: 2 }, { respectedGameTypeUpdatedAt: 0n, withdrawalBlockNumber: 1n });
+void [adapter, readyAt, eligible, fromNetwork, same, label, blocked, link, gas, arg, ok, status, sozu, text, exact, time, evm, short, duskEvmChain];
 // @ts-expect-error a route needs a name
 bridgeLink(networks.mainnet, {});

@@ -22,6 +22,7 @@ describe("the package", () => {
       "./sozu",
       "./rates",
       "./format",
+      "./duskevm",
       "./networks/*.json",
       "./schema.json",
       "./fixtures/sozu-vectors.json",
@@ -38,7 +39,7 @@ describe("the package", () => {
       }
     }
 
-    for (const entry of [".", "./sozu", "./rates", "./format"]) {
+    for (const entry of [".", "./sozu", "./rates", "./format", "./duskevm"]) {
       assert.match(pkg.exports[entry].types, /\.d\.ts$/);
     }
 
@@ -47,11 +48,13 @@ describe("the package", () => {
     const { formatDusk } = await import("@dusk-network/networks/format");
     const { SOZU_GAS } = await import("@dusk-network/networks/sozu");
     const { nativeRateEstimate } = await import("@dusk-network/networks/rates");
+    const { claimFrom } = await import("@dusk-network/networks/duskevm");
     const { default: testnet } = await import("@dusk-network/networks/networks/testnet.json", { with: { type: "json" } });
 
     assert.equal(networkFor(2)?.duskEvm?.chainId, testnet.duskEvm.chainId);
     assert.equal(typeof formatDusk, "function");
     assert.equal(typeof nativeRateEstimate, "function");
+    assert.equal(typeof claimFrom, "function");
     assert.equal(SOZU_GAS.sozu_stake.limit, 5_000_000n);
   });
 
@@ -85,7 +88,7 @@ describe("the package", () => {
   });
 
   it("gives JSR the declarations npm uses, for each JS entry point", () => {
-    for (const entry of [".", "./sozu", "./rates", "./format"]) {
+    for (const entry of [".", "./sozu", "./rates", "./format", "./duskevm"]) {
       const { default: file, types } = pkg.exports[entry];
       const first = readFileSync(new URL(`../${file}`, import.meta.url), "utf8").split("\n")[0];
 
@@ -108,6 +111,8 @@ describe("the package", () => {
       "networks/testnet.json",
       "package.json",
       "schema.json",
+      "src/duskevm.d.ts",
+      "src/duskevm.js",
       "src/format.d.ts",
       "src/format.js",
       "src/hex.js",

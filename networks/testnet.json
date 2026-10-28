@@ -44,6 +44,7 @@
       "symbol": "DUSK"
     },
     "rpcUrl": "https://rpc.testnet.evm.dusk.network",
+    "l1AdapterUrl": "https://rpc.testnet.evm.dusk.network/l1",
     "explorerUrl": "https://explorer.testnet.evm.dusk.network",
     "blockscoutApiUrl": "https://explorer.testnet.evm.dusk.network/api/v2",
     "predeploys": {

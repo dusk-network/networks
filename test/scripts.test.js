@@ -303,7 +303,7 @@ describe("gen-duskevm", () => {
       assert.equal(labels[`01${"0".repeat(62)}`], "Transfer contract");
       assert.equal(merged.duskEvm.name, "DuskEVM Testnet");
       assert.deepEqual(Object.keys(merged.duskEvm), [
-        "name", "chainId", "currency", "rpcUrl", "explorerUrl", "blockscoutApiUrl", "predeploys", "drivers", "contracts", "source",
+        "name", "chainId", "currency", "rpcUrl", "l1AdapterUrl", "explorerUrl", "blockscoutApiUrl", "predeploys", "drivers", "contracts", "source",
       ]);
     } finally {
       checkout.remove();

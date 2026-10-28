@@ -135,6 +135,7 @@ describe("the network files", () => {
     assert.equal(evm.drivers.optimismPortal.sha256, "9220bf0e96f8d1d20ae8c56459c75d402045bb0fa63851b9413c7db57749b360");
     assert.equal(evm.drivers.disputeGameFactory.sha256, "dd07f5a584779940bf116fb2ea32f455f8afbe3399c8e1f125f99f98d499afca");
     assert.equal(evm.predeploys.l2StandardBridge, "0x4200000000000000000000000000000000000010");
+    assert.equal(evm.l1AdapterUrl, "https://rpc.testnet.evm.dusk.network/l1");
   });
 
   it("point at Dusk Domains' manifest without copying its contracts", () => {
