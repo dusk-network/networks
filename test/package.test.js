@@ -55,6 +55,44 @@ describe("the package", () => {
     assert.equal(SOZU_GAS.sozu_stake.limit, 5_000_000n);
   });
 
+  it("is the same package on JSR, as @dusk/networks, with the same entry points", () => {
+    const jsr = JSON.parse(readFileSync(new URL("../jsr.json", import.meta.url), "utf8"));
+    /** @type {Record<string, string>} */
+    const npmExports = {};
+
+    for (const [entry, target] of Object.entries(pkg.exports)) {
+      if (entry === "./package.json") continue;
+
+      const file = typeof target === "string" ? target : target.default;
+
+      if (entry.includes("*")) {
+        for (const name of ["mainnet", "testnet", "devnet"]) {
+          npmExports[entry.replace("*", name)] = file.replace("*", name);
+        }
+      } else {
+        npmExports[entry] = file;
+      }
+    }
+
+    assert.equal(jsr.name, "@dusk/networks");
+    assert.equal(jsr.version, pkg.version);
+    assert.equal(jsr.license, pkg.license);
+    assert.deepEqual(jsr.exports, npmExports);
+    assert.deepEqual(
+      [...jsr.publish.include].sort(),
+      [...pkg.files.map((/** @type {string} */ f) => f.replace(/\/$/, "")), "LICENSE", "README.md"].sort()
+    );
+  });
+
+  it("gives JSR the declarations npm uses, for each JS entry point", () => {
+    for (const entry of [".", "./sozu", "./rates", "./format"]) {
+      const { default: file, types } = pkg.exports[entry];
+      const first = readFileSync(new URL(`../${file}`, import.meta.url), "utf8").split("\n")[0];
+
+      assert.equal(first, `/* @ts-self-types="./${types.split("/").pop()}" */`, entry);
+    }
+  });
+
   it("packs only the code, the data, the types and the docs", () => {
     const [packed] = JSON.parse(
       execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], { cwd: root, encoding: "utf8" })

@@ -47,6 +47,8 @@
     "test": "node --test",
     "validate": "node scripts/validate.mjs",
     "typecheck": "npx --yes --package=typescript@5.9.3 -- tsc -p test-types",
+    "check:versions": "node scripts/check-versions.js",
+    "check:jsr": "npx --yes jsr@0.14.3 publish --dry-run --allow-dirty",
     "gen:duskevm": "node scripts/gen-duskevm.mjs",
     "check:chain": "node scripts/check-chain.mjs"
   }

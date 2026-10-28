@@ -4,6 +4,23 @@ What the Dusk apps need to know about each Dusk network, in one place: endpoints
 
 The web wallet, the wallet extension, the explorer and the bridge use it.
 
+## Install
+
+From npm:
+
+```sh
+npm i @dusk-network/networks
+```
+
+From JSR, where it's `@dusk/networks`:
+
+```sh
+npx jsr add @dusk/networks
+deno add jsr:@dusk/networks
+```
+
+The entry points are the same on both, under each registry's name: `@dusk-network/networks/format` on npm is `@dusk/networks/format` on JSR.
+
 ## Entry points
 
 | Import | What it gives |
@@ -81,9 +98,15 @@ The files hold the IDs an app starts from. These change without a release, so th
 1. Edit `networks/<name>.json`. `npm run validate` checks it against the schema, and `npm test` runs the rest.
 2. DuskEVM's contracts come from [duskevm-genesis](https://github.com/dusk-network/duskevm-genesis): `node scripts/gen-duskevm.mjs <checkout>` writes them, and their labels. The name, endpoints, predeploys and drivers stay as written.
 3. `node scripts/check-chain.mjs` reads each network once, through Multicall for Dusk: the hub must name the Sozu fallbacks, every other contract in the file must exist, and the Dusk Domains manifest must match its sha256. It sends nothing.
-4. Add a line to `CHANGELOG.md` and bump the version. The apps then bump their pin.
+4. Release it, as below. The apps then bump their pin.
 
-CI runs the schema, the tests, the type check (`npm run typecheck`) and the genesis comparison on every push, and `check-chain` every week.
+CI runs the version check, the schema, the tests, the type check (`npm run typecheck`), JSR's dry run (`npm run check:jsr`) and the genesis comparison on every push, and `check-chain` every week.
+
+## Releasing
+
+1. Set the new version in both `package.json` and `jsr.json`, and give it a section in `CHANGELOG.md`.
+2. Tag the commit `vX.Y.Z` and push the tag.
+3. The Publish workflow does the rest. It checks the tag against both versions, runs the tests, and publishes to JSR and to npm with provenance. Then it creates the GitHub release, from the version's CHANGELOG section and generated notes. Run again, it skips a registry that already has the version.
 
 ## Licence
 
