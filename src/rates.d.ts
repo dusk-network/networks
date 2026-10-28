@@ -1,4 +1,21 @@
 /**
+ * Staking reward rates, estimated from one read of the node's provisioners:
+ * simple yearly rates for the network as a whole, as fractions. Nothing is
+ * promised: a single stake's result varies.
+ *
+ * @example
+ * ```js
+ * import { nativeRateEstimate, sozuRateEstimate } from "@dusk/networks/rates";
+ *
+ * const res = await fetch(`${node}/on/node/provisioners`, { method: "POST" });
+ * const native = nativeRateEstimate({ provisioners: await res.json(), tipHeight }); // 0.235
+ * sozuRateEstimate(native, { numerator: 15n, denominator: 100n }); // 0.2
+ * ```
+ *
+ * @module
+ */
+
+/**
  * About what native staking pays a year across the network, as a fraction
  * (0.235 is 23.5%): a simple rate, as rewards don't compound unless they're
  * claimed and staked again. `provisioners` is the node's

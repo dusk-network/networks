@@ -1,3 +1,21 @@
+/**
+ * Dusk's networks for the Dusk apps: each network's endpoints, contract IDs,
+ * bridge routes, labels and recipient blocklist. Find a network by the chain
+ * ID its node gives in `/on/node/info`, never by hostname.
+ *
+ * @example
+ * ```js
+ * import { bridgeLink, labelFor, networkFor, routes } from "@dusk/networks";
+ *
+ * const net = networkFor(2); // testnet
+ * labelFor(net, "51ced4fad52fc590def2736969c9e3e30013275a996c53714b81d8a08774aa37"); // "Sozu relayer"
+ * routes(net).filter((route) => route.running).map((route) => route.id); // ["dusk-to-dusk-evm", "dusk-evm-to-dusk"]
+ * bridgeLink(net, { route: "duskevm" }); // "https://bridge.testnet.dusk.network/#/move/duskevm"
+ * ```
+ *
+ * @module
+ */
+
 /** A Dusk contract ID: 64 lower-case hex digits, without 0x. */
 export type ContractId = string;
 
@@ -7,10 +25,11 @@ export type Account = string;
 /** An EVM address: 0x and 40 hex digits, with its EIP-55 checksum. */
 export type EvmAddress = `0x${string}`;
 
+/** A chain's own coin, as wallets list it. */
 export type Currency = Readonly<{ name: string; symbol: string; decimals: number }>;
 
-/** What every EVM chain here has. */
-type ChainFields = Readonly<{
+/** What every EVM chain here has: its ID, name, coin, RPC and explorer. */
+export type ChainFields = Readonly<{
   chainId: number;
   name: string;
   currency: Currency;
@@ -18,12 +37,13 @@ type ChainFields = Readonly<{
   explorerUrl: string;
 }>;
 
-/** Whether a route runs, and how long it usually takes. */
-type RouteState = Readonly<{ typicalSeconds: number | null; running: boolean }>;
+/** Whether a route runs, and how long it usually takes, in seconds. */
+export type RouteState = Readonly<{ typicalSeconds: number | null; running: boolean }>;
 
-/** A migration or a service as a file holds it, by the ID of the chain it reaches. */
-type ChainRoute = RouteState & Readonly<{ id: string; chain: string }>;
+/** A migration or a service as a network file holds it, by the ID of the chain it reaches. */
+export type ChainRoute = RouteState & Readonly<{ id: string; chain: string }>;
 
+/** An EVM chain a route reaches, with the DUSK token there. */
 export type EvmChain = ChainFields &
   Readonly<{
     /** The DUSK token on this chain. */
@@ -31,6 +51,7 @@ export type EvmChain = ChainFields &
     tokenLabel: string;
   }>;
 
+/** DuskEVM, the EVM chain that settles on a network. */
 export type DuskEvm = ChainFields &
   Readonly<{
     /** The chain's name as wallets list it. */
@@ -108,8 +129,10 @@ export type Network = Readonly<{
 export type RouteChain = ChainFields &
   Readonly<{ id: string; token?: EvmAddress; tokenLabel?: string }>;
 
-type RouteBase = RouteState & Readonly<{ id: string; from: string; to: string; chain: RouteChain }>;
+/** What every route `routes` gives has. */
+export type RouteBase = RouteState & Readonly<{ id: string; from: string; to: string; chain: RouteChain }>;
 
+/** A route between Dusk and an EVM chain, as `routes` gives it, with the chain it reaches. */
 export type Route =
   | (RouteBase &
       Readonly<{ kind: "migration"; contract: EvmAddress; payoutAccount: Account | null }>)

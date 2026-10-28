@@ -1,3 +1,4 @@
+/* @ts-self-types="./index.d.ts" */
 /**
  * Dusk's networks, as frozen objects, and what the apps look up in them.
  *
