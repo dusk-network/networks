@@ -10,23 +10,7 @@ permissions:
 
 jobs:
   test:
-    name: Schema and tests (Node ${{ matrix.node }})
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [20, 22, 24]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-      - run: npm run validate
-      - run: npm test
-      - run: npm run typecheck
-
-  duskevm-genesis:
-    name: DuskEVM part matches duskevm-genesis
-    runs-on: ubuntu-latest
+    runs-on: core
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -35,5 +19,8 @@ jobs:
           path: duskevm-genesis
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: latest
+      - run: npm run validate
+      - run: npm test
+      - run: npm run typecheck
       - run: node scripts/gen-duskevm.mjs duskevm-genesis --check
