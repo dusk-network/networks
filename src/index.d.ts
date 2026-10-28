@@ -9,39 +9,47 @@ export type EvmAddress = `0x${string}`;
 
 export type Currency = Readonly<{ name: string; symbol: string; decimals: number }>;
 
-export type EvmChain = Readonly<{
+/** What every EVM chain here has. */
+type ChainFields = Readonly<{
   chainId: number;
   name: string;
   currency: Currency;
   rpcUrl: string;
   explorerUrl: string;
-  /** The DUSK token on this chain. */
-  token: EvmAddress;
-  tokenLabel: string;
 }>;
 
-export type DuskEvm = Readonly<{
-  /** The chain's name as wallets list it. */
-  name: string;
-  chainId: number;
-  currency: Currency;
-  rpcUrl: string;
-  explorerUrl: string;
-  blockscoutApiUrl: string;
-  predeploys: Readonly<{
-    l1Block: EvmAddress;
-    l2CrossDomainMessenger: EvmAddress;
-    l2StandardBridge: EvmAddress;
-    l2ToL1MessagePasser: EvmAddress;
+/** Whether a route runs, and how long it usually takes. */
+type RouteState = Readonly<{ typicalSeconds: number | null; running: boolean }>;
+
+/** A migration or a service as a file holds it, by the ID of the chain it reaches. */
+type ChainRoute = RouteState & Readonly<{ id: string; chain: string }>;
+
+export type EvmChain = ChainFields &
+  Readonly<{
+    /** The DUSK token on this chain. */
+    token: EvmAddress;
+    tokenLabel: string;
   }>;
-  drivers: Readonly<{
-    disputeGameFactory: Readonly<{ file: string; sha256: string }>;
-    optimismPortal: Readonly<{ file: string; sha256: string }>;
+
+export type DuskEvm = ChainFields &
+  Readonly<{
+    /** The chain's name as wallets list it. */
+    name: string;
+    blockscoutApiUrl: string;
+    predeploys: Readonly<{
+      l1Block: EvmAddress;
+      l2CrossDomainMessenger: EvmAddress;
+      l2StandardBridge: EvmAddress;
+      l2ToL1MessagePasser: EvmAddress;
+    }>;
+    drivers: Readonly<{
+      disputeGameFactory: Readonly<{ file: string; sha256: string }>;
+      optimismPortal: Readonly<{ file: string; sha256: string }>;
+    }>;
+    /** Every DuskEVM contract on Dusk, by its name in duskevm-genesis. */
+    contracts: Readonly<Record<string, Readonly<{ contractId: ContractId; evmAddress: EvmAddress }>>>;
+    source: Readonly<{ files: Readonly<Record<string, string>>; repository: string }>;
   }>;
-  /** Every DuskEVM contract on Dusk, by its name in duskevm-genesis. */
-  contracts: Readonly<Record<string, Readonly<{ contractId: ContractId; evmAddress: EvmAddress }>>>;
-  source: Readonly<{ files: Readonly<Record<string, string>>; repository: string }>;
-}>;
 
 /** One network's file, as `networks/<name>.json` holds it. */
 export type Network = Readonly<{
@@ -72,34 +80,18 @@ export type Network = Readonly<{
   duskEvm: DuskEvm | null;
   routes: Readonly<{
     chains: Readonly<Record<string, EvmChain>>;
-    migrations: ReadonlyArray<
-      Readonly<{
-        id: string;
-        chain: string;
-        contract: EvmAddress;
-        payoutAccount: Account | null;
-        typicalSeconds: number | null;
-        running: boolean;
-      }>
-    >;
+    migrations: ReadonlyArray<ChainRoute & Readonly<{ contract: EvmAddress; payoutAccount: Account | null }>>;
     services: ReadonlyArray<
-      Readonly<{
-        id: string;
-        chain: string;
-        account: Account;
-        /** Lux, as a decimal string. */
-        feeLux: string;
-        typicalSeconds: number | null;
-        running: boolean;
-      }>
+      ChainRoute &
+        Readonly<{
+          account: Account;
+          /** Lux, as a decimal string. */
+          feeLux: string;
+        }>
     >;
     duskEvm: ReadonlyArray<
-      Readonly<{
-        id: "dusk-to-dusk-evm" | "dusk-evm-to-dusk";
-        direction: "deposit" | "withdrawal";
-        typicalSeconds: number | null;
-        running: boolean;
-      }>
+      RouteState &
+        Readonly<{ id: "dusk-to-dusk-evm" | "dusk-evm-to-dusk"; direction: "deposit" | "withdrawal" }>
     >;
     /** Migration contracts no longer offered. */
     retired: ReadonlyArray<Readonly<{ chain: string; contract: EvmAddress; token: EvmAddress }>>;
@@ -113,25 +105,10 @@ export type Network = Readonly<{
 }>;
 
 /** The chain a route reaches, with its ID ("bsc", "ethereum", "dusk-evm"). */
-export type RouteChain = Readonly<{
-  id: string;
-  chainId: number;
-  name: string;
-  currency: Currency;
-  rpcUrl: string;
-  explorerUrl: string;
-  token?: EvmAddress;
-  tokenLabel?: string;
-}>;
+export type RouteChain = ChainFields &
+  Readonly<{ id: string; token?: EvmAddress; tokenLabel?: string }>;
 
-type RouteBase = Readonly<{
-  id: string;
-  from: string;
-  to: string;
-  chain: RouteChain;
-  running: boolean;
-  typicalSeconds: number | null;
-}>;
+type RouteBase = RouteState & Readonly<{ id: string; from: string; to: string; chain: RouteChain }>;
 
 export type Route =
   | (RouteBase &
@@ -161,10 +138,11 @@ export declare function isBlocked(net: NetworkRef, account: string): boolean;
 export declare function routes(net: NetworkRef): ReadonlyArray<Route>;
 
 /**
- * `<bridge>/#/move/<route>?to=<account>`, or null while the bridge has no
- * published address or the network has no such route. Throws on a route
- * name the bridge doesn't know (RangeError), or a `to` that isn't a Dusk
- * account (TypeError).
+ * `<bridge>/#/move/<route>?to=<account>`, with `route` a route's ID
+ * ("bsc-to-dusk") or one of the bridge's names: "bsc", "ethereum",
+ * "duskevm", "migrate". Null while the bridge has no published address or
+ * the network has no such route. Throws on a route name the bridge doesn't
+ * know (RangeError), or a `to` that isn't a Dusk account (TypeError).
  */
 export declare function bridgeLink(
   net: NetworkRef,

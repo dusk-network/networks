@@ -45,6 +45,15 @@ sozuStake(amount, status.pool, status.fees?.deposit); // { fee, worth, stDusk, o
 
 `account` is `balance_of`'s argument as the pool's data driver encodes it; leave it out to read no balances.
 
+A stake or an unstake goes from a public account, at the node's gas price:
+
+```js
+import { SOZU_FN, SOZU_GAS, sozuCall } from "@dusk-network/networks/sozu";
+
+const call = sozuCall(status.contracts.pool, SOZU_FN.STAKE, amount); // { contractId, deposit, fnArgs, fnName }
+const { limit, minimum } = SOZU_GAS[call.fnName]; // warn while typing under the minimum
+```
+
 The bridge takes a route and a Dusk recipient in its link. `bridgeLink` builds it, and gives null while the network's bridge has no published address:
 
 ```js

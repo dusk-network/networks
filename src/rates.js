@@ -1,34 +1,31 @@
 /**
- * Staking reward rates, estimated from one read of the node's provisioners
- * and a few constants. Each is a simple yearly rate for the network as a
- * whole, as a fraction (0.235 is 23.5% a year): rewards collect in a stake's
- * reward balance and don't compound unless they're claimed and staked
- * again. A single stake's own result varies, and nothing here is promised.
+ * Staking reward rates, from one read of the node's provisioners and a few
+ * constants: simple yearly rates for the network as a whole, as fractions.
  *
  * @module
  */
 
 /**
- * DUSK minted per block, in lux, as the node mints it (Rusk 1.7.1): nine
- * periods of 12,614,400 blocks (four years of 10-second blocks), each about
- * half the one before, then one last mint, 500,000,000 DUSK in all. Each
- * entry holds from the block after the previous entry's last height.
+ * DUSK minted per block, in lux, as Rusk 1.7.1 mints it: each period's last
+ * height and what its blocks mint, from the block after the previous one's.
+ * Nine periods of 12,614,400 blocks, each about half the one before, then
+ * one last mint: 500,000,000 DUSK in all.
+ *
+ * @type {ReadonlyArray<readonly [number, bigint]>}
  */
-export const EMISSION_SCHEDULE = Object.freeze(
-  /** @type {const} */ ([
-    Object.freeze({ lastHeight: 0, lux: 0n }),
-    Object.freeze({ lastHeight: 12_614_400, lux: 19_857_400_000n }),
-    Object.freeze({ lastHeight: 25_228_800, lux: 9_928_700_000n }),
-    Object.freeze({ lastHeight: 37_843_200, lux: 4_964_350_000n }),
-    Object.freeze({ lastHeight: 50_457_600, lux: 2_482_180_000n }),
-    Object.freeze({ lastHeight: 63_072_000, lux: 1_241_090_000n }),
-    Object.freeze({ lastHeight: 75_686_400, lux: 620_540_000n }),
-    Object.freeze({ lastHeight: 88_300_800, lux: 310_270_000n }),
-    Object.freeze({ lastHeight: 100_915_200, lux: 155_140_000n }),
-    Object.freeze({ lastHeight: 113_529_596, lux: 77_570_000n }),
-    Object.freeze({ lastHeight: 113_529_597, lux: 54_280_000n }),
-  ])
-);
+const EMISSION = [
+  [0, 0n],
+  [12_614_400, 19_857_400_000n],
+  [25_228_800, 9_928_700_000n],
+  [37_843_200, 4_964_350_000n],
+  [50_457_600, 2_482_180_000n],
+  [63_072_000, 1_241_090_000n],
+  [75_686_400, 620_540_000n],
+  [88_300_800, 310_270_000n],
+  [100_915_200, 155_140_000n],
+  [113_529_596, 77_570_000n],
+  [113_529_597, 54_280_000n],
+];
 
 /**
  * The share of each block's reward that reaches provisioners. 10% goes to
@@ -39,13 +36,13 @@ export const EMISSION_SCHEDULE = Object.freeze(
  * mainnet blocks and Sozu's harvests paid in October 2026; measure it again
  * now and then.
  */
-export const PROVISIONER_SHARE = 0.78;
+const PROVISIONER_SHARE = 0.78;
 
 /** Seconds per block: the target, and mainnet's average over October 2026. */
-export const BLOCK_TIME_SECONDS = 10;
+const BLOCK_TIME_SECONDS = 10;
 
 /** The least stake consensus counts, in lux: 1,000 DUSK. */
-export const MINIMUM_STAKE_LUX = 1_000_000_000_000n;
+const MINIMUM_STAKE_LUX = 1_000_000_000_000n;
 
 const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
 
@@ -60,22 +57,6 @@ const heightOf = (value) => {
     ? height
     : null;
 };
-
-/**
- * The DUSK a block at `height` mints, in lux, without its fees.
- *
- * @param {number | bigint} height
- * @returns {bigint}
- */
-export function emissionAt(height) {
-  const at = heightOf(height);
-
-  if (at === null) {
-    throw new RangeError("A block height is a whole number, 0 or more");
-  }
-
-  return EMISSION_SCHEDULE.find(({ lastHeight }) => at <= lastHeight)?.lux ?? 0n;
-}
 
 /**
  * @param {unknown} value
@@ -94,22 +75,20 @@ const luxOf = (value) => {
 };
 
 /**
- * The stake consensus counts at `tipHeight`, in lux: the sum of `amount`
- * (not `locked`) over provisioners whose `eligibility` is at or below the
- * tip and who stake at least 1,000 DUSK. `provisioners` is the node's
- * `/on/node/provisioners` reply.
+ * What a block at `height` mints, in lux, without its fees.
+ *
+ * @param {number} height
+ */
+const emissionAt = (height) => EMISSION.find(([last]) => height <= last)?.[1] ?? 0n;
+
+/**
+ * The stake consensus counts at `tip`, in lux: `amount` (not `locked`) of
+ * the provisioners eligible at the tip with at least 1,000 DUSK.
  *
  * @param {ReadonlyArray<{ amount?: unknown, eligibility?: unknown }>} provisioners
- * @param {number | bigint} tipHeight
- * @returns {bigint}
+ * @param {number} tip
  */
-export function eligibleStake(provisioners, tipHeight) {
-  const tip = heightOf(tipHeight);
-
-  if (!Array.isArray(provisioners) || tip === null) {
-    throw new TypeError("Give the node's provisioners and a block height");
-  }
-
+function eligibleStake(provisioners, tip) {
   let sum = 0n;
 
   for (const provisioner of provisioners) {
@@ -125,11 +104,8 @@ export function eligibleStake(provisioners, tipHeight) {
 }
 
 /**
- * About what native staking pays a year across the network, as a simple
- * rate: E × s × Y ÷ S, with E what a block at the tip mints, s the
- * provisioners' share (PROVISIONER_SHARE), Y the blocks in a year of 365.25
- * days at `blockTimeSeconds`, and S the eligible stake. Null when nothing is
- * staked.
+ * E × s × Y ÷ S: what a block at the tip mints, the provisioners' share,
+ * the blocks in a year of 365.25 days, and the eligible stake.
  *
  * @param {{
  *   provisioners: ReadonlyArray<{ amount?: unknown, eligibility?: unknown }>,
@@ -147,16 +123,20 @@ export function nativeRateEstimate({
     throw new RangeError("A block time is a number of seconds, more than 0");
   }
 
-  const stake = eligibleStake(provisioners, tipHeight);
+  const tip = heightOf(tipHeight);
+
+  if (!Array.isArray(provisioners) || tip === null) {
+    throw new TypeError("Give the node's provisioners and a block height");
+  }
+
+  const stake = eligibleStake(provisioners, tip);
 
   if (stake === 0n) {
     return null;
   }
 
-  const blocksPerYear = SECONDS_PER_YEAR / blockTimeSeconds;
-
   return (
-    (Number(emissionAt(tipHeight)) * PROVISIONER_SHARE * blocksPerYear) /
+    (Number(emissionAt(tip)) * PROVISIONER_SHARE * (SECONDS_PER_YEAR / blockTimeSeconds)) /
     Number(stake)
   );
 }
@@ -187,11 +167,8 @@ function feeFraction(fee) {
 }
 
 /**
- * About what Sozu pays a year: the native estimate less Sozu's reward fee,
- * native × (1 − fee). `rewardFee` is the substrate's reward fee rate
- * (`{ numerator, denominator }`, as `readSozuStatus` gives it) or a
- * fraction. Sozu restakes every hour, so its stDUSK compounds a little over
- * this. Null without a native estimate or a fee.
+ * native × (1 − fee). Sozu restakes every hour, so its stDUSK compounds a
+ * little over this.
  *
  * @param {number | null} native
  * @param {{ numerator: bigint | number | string, denominator: bigint | number | string } | number | null} rewardFee

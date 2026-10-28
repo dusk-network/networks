@@ -226,10 +226,14 @@ describe("the network files", () => {
 
 describe("networkFor", () => {
   it("takes the chain ID as /on/node/info gives it, or as some apps write it", () => {
-    assert.equal(networkFor(1), networks.mainnet);
-    assert.equal(networkFor("2"), networks.testnet);
-    assert.equal(networkFor(3n), networks.devnet);
-    assert.equal(networkFor("dusk:1"), networks.mainnet);
+    for (const [id, network] of /** @type {const} */ ([
+      [1, networks.mainnet],
+      ["2", networks.testnet],
+      [3n, networks.devnet],
+      ["dusk:1", networks.mainnet],
+    ])) {
+      assert.equal(networkFor(id), network, String(id));
+    }
   });
 
   it("has no network for a chain without a file", () => {

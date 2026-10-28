@@ -1,16 +1,12 @@
 /**
- * Sozu: liquid staking on Dusk, run by a third party. Its rules as its
- * contracts (v1.0.0) apply them, and the reads that give an account's
- * figures. Amounts are lux, as bigints.
- *
- * The reads go through a `read(contractId, fnName, argBytes)` the app
- * gives, so each app keeps its own Multicall batcher. Every argument but the
- * account is fixed bytes here and every reply is plain rkyv, so no read
- * needs a data driver; the app encodes the account, as the pool's data
- * driver does.
+ * Sozu's rules as its contracts (v1.0.0) apply them, and its reads. Amounts
+ * are lux, as bigints. Every argument but the account is fixed bytes here
+ * and every reply is plain rkyv, so no read needs a data driver.
  *
  * @module
  */
+
+import { fromHex, toHex } from "./hex.js";
 
 /** Lux in one DUSK, and in one stDUSK. */
 const ONE = 1_000_000_000n;
@@ -239,14 +235,6 @@ export const duskPerStDusk = (pool) =>
  */
 export const readLux = toLux;
 
-/** @param {Uint8Array} bytes */
-const toHex = (bytes) =>
-  Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-
-/** @param {string} hex */
-const fromHex = (hex) =>
-  Uint8Array.from(hex.match(/../g) ?? [], (b) => parseInt(b, 16));
-
 /**
  * `hub.contract(name)`'s argument for each name the hub keeps: the name as
  * an rkyv 0.7 `String`, as Sozu's hub data driver encodes it. A name of up
@@ -262,7 +250,7 @@ export const HUB_NAME_ARGS = Object.freeze({
 });
 
 /** The substrate's enums, one byte each: `StakeFeeKind` and `FeatureKind`. */
-export const SUBSTRATE_KINDS = Object.freeze({
+const SUBSTRATE_KINDS = Object.freeze({
   deposit: 0,
   maintenance: 0,
   reward: 1,
@@ -391,13 +379,8 @@ const contractIdOf = (id) => {
  * @param {Uint8Array} args
  * @returns {Promise<Uint8Array>}
  */
-function start(read, id, fnName, args) {
-  try {
-    return Promise.resolve(read(id, fnName, args));
-  } catch (error) {
-    return Promise.reject(error);
-  }
-}
+const start = (read, id, fnName, args) =>
+  new Promise((resolve) => resolve(read(id, fnName, args)));
 
 /**
  * The figures, from the contracts `ids` names, all started at once so they

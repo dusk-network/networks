@@ -1,7 +1,5 @@
 /**
- * Dusk's networks: each one's endpoints, contracts and routes, as frozen
- * objects. Key them by the chain ID the node gives in `/on/node/info`,
- * never by hostname, so a custom node of a network gets that network.
+ * Dusk's networks, as frozen objects, and what the apps look up in them.
  *
  * @module
  */
@@ -9,6 +7,10 @@
 import devnet from "../networks/devnet.json" with { type: "json" };
 import mainnet from "../networks/mainnet.json" with { type: "json" };
 import testnet from "../networks/testnet.json" with { type: "json" };
+
+/** @typedef {import("./index.js").Network} Network */
+/** @typedef {import("./index.js").NetworkRef} NetworkRef */
+/** @typedef {import("./index.js").Route} Route */
 
 /**
  * @template T
@@ -25,61 +27,35 @@ function deepFreeze(value) {
 }
 
 /**
- * Every network there's a file for, by name. The schema and the tests hold
- * the files to the `Network` type.
+ * The schema and the tests hold the files to the `Network` type.
  *
- * @type {Readonly<{ mainnet: import("./index.js").Network, testnet: import("./index.js").Network, devnet: import("./index.js").Network }>}
+ * @type {Readonly<{ mainnet: Network, testnet: Network, devnet: Network }>}
  */
 export const networks = deepFreeze(
   /** @type {any} */ ({ mainnet, testnet, devnet })
 );
 
-/** @type {Map<number, import("./index.js").Network>} */
-const byChainId = new Map(
-  Object.values(networks).map((network) => [network.chainId, network])
-);
-
 /**
- * @param {unknown} chainId
- * @returns {number | null}
- */
-function chainIdOf(chainId) {
-  if (typeof chainId === "number") {
-    return Number.isSafeInteger(chainId) ? chainId : null;
-  }
-
-  if (typeof chainId === "bigint") {
-    return chainId <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(chainId) : null;
-  }
-
-  const match =
-    typeof chainId === "string" ? /^\s*(?:dusk:)?(\d+)\s*$/.exec(chainId) : null;
-
-  return match ? Number(match[1]) : null;
-}
-
-/**
- * The network with this chain ID (0 local, 1 mainnet, 2 testnet, 3
- * devnet), as `/on/node/info` gives it: a number, or the same as a string,
- * or "dusk:2" as some apps write it. Null for a chain there's no file for,
- * local included.
- *
  * @param {number | bigint | string} chainId
+ * @returns {Network | null}
  */
 export function networkFor(chainId) {
-  const id = chainIdOf(chainId);
+  const digits =
+    typeof chainId === "string" ? /^\s*(?:dusk:)?(\d+)\s*$/.exec(chainId)?.[1] : undefined;
+  const id =
+    typeof chainId === "bigint" ? Number(chainId) : digits === undefined ? chainId : Number(digits);
 
-  return (id === null ? undefined : byChainId.get(id)) ?? null;
+  return Object.values(networks).find((network) => network.chainId === id) ?? null;
 }
 
 /**
  * @param {unknown} net
- * @returns {import("./index.js").Network}
+ * @returns {Network}
  */
 function networkOf(net) {
   const network =
     net && typeof net === "object"
-      ? /** @type {import("./index.js").Network} */ (net)
+      ? /** @type {Network} */ (net)
       : networkFor(/** @type {number | bigint | string} */ (net));
 
   if (!network || typeof network.chainId !== "number" || !network.display) {
@@ -90,12 +66,8 @@ function networkOf(net) {
 }
 
 /**
- * What the explorer and Activity call a contract or an account on `net`:
- * "Transfer contract", "Sozu relayer", "DuskEVM bridge", "BSC bridge". Null
- * when it has no name here. A contract ID can come with 0x, in any case.
- *
- * @param {import("./index.js").Network | number | bigint | string} net A network, or its chain ID
- * @param {string} id A contract ID in hex, or a base58 account
+ * @param {NetworkRef} net
+ * @param {string} id A contract ID in hex, with or without 0x, or a base58 account
  * @returns {string | null}
  */
 export function labelFor(net, id) {
@@ -108,11 +80,8 @@ export function labelFor(net, id) {
 }
 
 /**
- * Why the apps don't send to `account` on `net`: "compromised" or "scam",
- * or null when they do.
- *
- * @param {import("./index.js").Network | number | bigint | string} net
- * @param {string} account A base58 account
+ * @param {NetworkRef} net
+ * @param {string} account
  * @returns {"compromised" | "scam" | null}
  */
 export function blockedReason(net, account) {
@@ -123,27 +92,22 @@ export function blockedReason(net, account) {
 }
 
 /**
- * Whether the apps refuse to send to `account` on `net`: it was reported as
- * compromised, or used for scams. This only guards the apps' own forms.
+ * This only guards the apps' own forms.
  *
- * @param {import("./index.js").Network | number | bigint | string} net
- * @param {string} account A base58 account
+ * @param {NetworkRef} net
+ * @param {string} account
  */
 export const isBlocked = (net, account) => blockedReason(net, account) !== null;
 
-/** @type {WeakMap<object, ReadonlyArray<import("./index.js").Route>>} */
+/** @type {WeakMap<object, ReadonlyArray<Route>>} */
 const routeCache = new WeakMap();
 
 /**
- * The network's routes between Dusk and the EVM chains, each with the
- * chain it reaches: migrations into Dusk, Dusk's transfers out
- * (`service`), and DuskEVM's deposits and withdrawals. A route that isn't
- * `running` is still listed, so transfers already sent on it can be
- * followed. Retired migration contracts aren't routes: see
- * `net.routes.retired`.
+ * A route that isn't `running` stays listed, so transfers already sent on
+ * it can be followed.
  *
- * @param {import("./index.js").Network | number | bigint | string} net
- * @returns {ReadonlyArray<import("./index.js").Route>}
+ * @param {NetworkRef} net
+ * @returns {ReadonlyArray<Route>}
  */
 export function routes(net) {
   const network = networkOf(net);
@@ -171,7 +135,7 @@ export function routes(net) {
         rpcUrl: evm.rpcUrl,
       }
     : null;
-  /** @type {import("./index.js").Route[]} */
+  /** @type {Route[]} */
   const list = [
     ...migrations.map((route) => ({
       chain: chainOf(route.chain),
@@ -217,12 +181,10 @@ export function routes(net) {
 }
 
 /**
- * The names the bridge's links take for a route besides its ID: one of its
- * three routes ("bsc" for BSC ↔ Dusk, "ethereum" for Ethereum → Dusk,
- * "duskevm" for Dusk ↔ DuskEVM), or "migrate" for whichever route into
- * Dusk runs. Each holds on a network that has such a route.
+ * The bridge's names for a route besides its ID (its names.js): one of its
+ * three routes, or "migrate" for whichever route into Dusk runs.
  *
- * @type {Readonly<Record<string, (route: import("./index.js").Route) => boolean>>}
+ * @type {Readonly<Record<string, (route: Route) => boolean>>}
  */
 const ROUTE_NAMES = Object.freeze({
   bsc: (route) => route.chain.id === "bsc",
@@ -240,15 +202,9 @@ const ALL_ROUTE_IDS = new Set(
 );
 
 /**
- * A link to the bridge, opened on a route: `<bridge>/#/move/<route>`, and
- * with `to`, a Dusk account the bridge pays: `?to=<account>`, as the web
- * wallet's Migrate hands its own account over. `route` is a route's ID
- * ("bsc-to-dusk") or one of the bridge's names for one ("bsc", "ethereum",
- * "duskevm", "migrate"). The bridge takes `to` on a route that pays a Dusk
- * account; anything but a Dusk account throws. Null while the network's
- * bridge has no published address, or when the network has no such route.
+ * The bridge's hand-off: `#/move/<route>?to=<account>`.
  *
- * @param {import("./index.js").Network | number | bigint | string} net
+ * @param {NetworkRef} net
  * @param {{ route: string, to?: string }} options
  * @returns {string | null}
  */

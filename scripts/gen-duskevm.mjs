@@ -23,11 +23,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const NETWORKS = ["mainnet", "testnet", "devnet"];
 const REPOSITORY = "https://github.com/dusk-network/duskevm-genesis";
 
-/** How the explorer and Activity name each L1 contract, by its genesis key. */
+/**
+ * How the explorer and Activity name an L1 contract, by its genesis key,
+ * where "DuskEVM" and the key's words don't say it.
+ */
 const LABELS = Object.freeze({
-  anchor_state_registry: "DuskEVM anchor state registry",
   delayed_weth: "DuskEVM delayed WETH",
-  dispute_game_factory: "DuskEVM dispute game factory",
   evm_tx_router: "DuskEVM transaction router",
   fault_dispute_game_hub: "DuskEVM fault dispute games",
   l1_cross_domain_messenger: "DuskEVM messenger",
@@ -38,18 +39,12 @@ const LABELS = Object.freeze({
   optimism_mintable_erc721_factory: "DuskEVM ERC-721 factory",
   optimism_portal: "DuskEVM bridge portal",
   permissioned_dispute_game_hub: "DuskEVM permissioned dispute games",
-  preimage_oracle: "DuskEVM preimage oracle",
-  protocol_versions: "DuskEVM protocol versions",
-  proxy_admin: "DuskEVM proxy admin",
-  superchain_config: "DuskEVM superchain config",
-  system_config: "DuskEVM system config",
   system_config_impl: "DuskEVM system config (implementation)",
   system_config_legacy: "DuskEVM system config (legacy)",
-  transparent_proxy: "DuskEVM transparent proxy",
   tx_meta_registry: "DuskEVM transaction metadata",
 });
 
-/** A key the table doesn't have yet: its words, after "DuskEVM". */
+/** A key the table doesn't have: its words, after "DuskEVM". */
 export const labelOf = (key) => LABELS[key] ?? `DuskEVM ${key.replaceAll("_", " ")}`;
 
 /** An EVM-native coin has 18 decimals. */
@@ -63,29 +58,11 @@ const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 
-/**
- * The rollup's record of a contract must be the address book's: both there,
- * and the same address. Else the two files aren't one set.
- *
- * @param {string} name The network
- * @param {string} field rollup.json's field
- * @param {unknown} fromRollup
- * @param {string} key l1-addresses.json's contract
- * @param {unknown} fromBook
- */
-function sameContract(name, field, fromRollup, key, fromBook) {
-  if (typeof fromRollup !== "string" || !EVM_ADDRESS.test(fromRollup)) {
-    fail(`${name}: rollup.json has no ${field}`);
-  }
-
-  if (typeof fromBook !== "string" || !EVM_ADDRESS.test(fromBook)) {
-    fail(`${name}: l1-addresses.json has no ${key}`);
-  }
-
-  if (fromRollup.toLowerCase() !== fromBook.toLowerCase()) {
-    fail(`${name}: rollup.json's ${field} isn't l1-addresses.json's ${key}`);
-  }
-}
+/** rollup.json's own record of a contract, and the address book's key for it. */
+const REQUIRED_PAIRS = [
+  ["deposit_contract_address", "optimism_portal"],
+  ["l1_system_config_address", "system_config"],
+];
 
 /**
  * The generated part of one network, from its genesis directory.
@@ -130,27 +107,28 @@ export function generate(genesisDir, name, network) {
     const { contract_id: id, evm_address: evm } = addresses.contracts[key];
 
     if (!/^[0-9a-f]{64}$/.test(id ?? "")) fail(`${name}: ${key} has no contract ID`);
-    if (!/^0x[0-9a-fA-F]{40}$/.test(evm ?? "")) fail(`${name}: ${key} has no EVM address`);
+    if (!EVM_ADDRESS.test(evm ?? "")) fail(`${name}: ${key} has no EVM address`);
 
     contracts[key] = { contractId: id, evmAddress: formatEvmAddress(evm) };
   }
 
-  // The rollup's own record of the portal and the system config must be
-  // the contracts the address book names.
-  sameContract(
-    name,
-    "deposit_contract_address",
-    rollup.deposit_contract_address,
-    "optimism_portal",
-    contracts.optimism_portal?.evmAddress
-  );
-  sameContract(
-    name,
-    "l1_system_config_address",
-    rollup.l1_system_config_address,
-    "system_config",
-    contracts.system_config?.evmAddress
-  );
+  // The rollup's record of the portal and the system config must be the
+  // contracts the address book names, both there: else the two files
+  // aren't one set.
+  for (const [field, key] of REQUIRED_PAIRS) {
+    const fromRollup = rollup[field];
+    const fromBook = contracts[key]?.evmAddress;
+
+    if (typeof fromRollup !== "string" || !EVM_ADDRESS.test(fromRollup)) {
+      fail(`${name}: rollup.json has no ${field}`);
+    }
+
+    if (!fromBook) fail(`${name}: l1-addresses.json has no ${key}`);
+
+    if (fromRollup.toLowerCase() !== fromBook.toLowerCase()) {
+      fail(`${name}: rollup.json's ${field} isn't l1-addresses.json's ${key}`);
+    }
+  }
 
   // The L2 genesis, where the checkout has it: the same chain, and the
   // predeploys the file names have code there.
@@ -217,19 +195,21 @@ export function generate(genesisDir, name, network) {
 }
 
 /**
- * The network with its DuskEVM part regenerated, keys in a fixed order.
+ * The network with its DuskEVM part regenerated, its keys where the file
+ * has them.
  *
  * @param {any} network
  * @param {ReturnType<typeof generate>} generated
  */
 export function merge(network, generated) {
+  const { labels: generatedLabels, ...part } = generated;
   const before = network.duskEvm;
   const old = new Set(Object.values(before.contracts ?? {}).map((c) => c.contractId));
   const labels = Object.fromEntries(
     Object.entries(network.display.labels).filter(([id]) => !old.has(id))
   );
 
-  for (const [id, label] of Object.entries(generated.labels)) {
+  for (const [id, label] of Object.entries(generatedLabels)) {
     if (id in labels && labels[id] !== label) {
       // Another part of the file names it: keep that name.
       continue;
@@ -241,18 +221,7 @@ export function merge(network, generated) {
   return {
     ...network,
     display: { ...network.display, labels },
-    duskEvm: {
-      name: before.name,
-      chainId: generated.chainId,
-      currency: generated.currency,
-      rpcUrl: before.rpcUrl,
-      explorerUrl: before.explorerUrl,
-      blockscoutApiUrl: before.blockscoutApiUrl,
-      predeploys: before.predeploys,
-      drivers: before.drivers,
-      contracts: generated.contracts,
-      source: generated.source,
-    },
+    duskEvm: { ...before, ...part },
   };
 }
 

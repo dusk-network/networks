@@ -4,6 +4,8 @@
  * need no data driver. One query carries every call and answers each one.
  */
 
+import { fromHex } from "../../src/hex.js";
+
 const encoder = new TextEncoder();
 
 /** A name of up to 7 bytes sits inline in rkyv 0.7's 8-byte string slot. */
@@ -20,13 +22,7 @@ const ROOT = 16;
 
 const align = (n, to) => Math.ceil(n / to) * to;
 
-/** @param {string} hex */
-export const fromHex = (hex) =>
-  Uint8Array.from(hex.match(/../g) ?? [], (b) => parseInt(b, 16));
-
-/** @param {Uint8Array} bytes */
-export const toHex = (bytes) =>
-  Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+export { fromHex, toHex } from "../../src/hex.js";
 
 /**
  * The `aggregate` argument: a `Vec<Call>`. Each call's name (when longer

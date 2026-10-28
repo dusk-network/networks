@@ -2,26 +2,37 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
-import {
-  BLOCK_TIME_SECONDS,
-  EMISSION_SCHEDULE,
-  MINIMUM_STAKE_LUX,
-  PROVISIONER_SHARE,
-  eligibleStake,
-  emissionAt,
-  nativeRateEstimate,
-  sozuRateEstimate,
-} from "../src/rates.js";
+import { nativeRateEstimate, sozuRateEstimate } from "../src/rates.js";
 
 const LUX = 1_000_000_000n;
+const YEAR = 365.25 * 24 * 60 * 60;
 
-/** Mainnet's provisioners on 28 Oct 2026, parsed as an app parses the reply. */
+/** Mainnet's provisioners that count on 28 Oct 2026, parsed as an app parses the reply. */
 const snapshot = JSON.parse(
   readFileSync(new URL("./fixtures/mainnet-provisioners.json", import.meta.url), "utf8")
 );
 
 /** A rate as a percentage to one decimal, as the research quotes it. */
 const percent = (/** @type {number | null} */ rate) => Math.round(Number(rate) * 1000) / 10;
+
+/**
+ * What a block at `height` mints, in lux, read back from the rate: one
+ * provisioner with 1,000 DUSK, and a block time that makes s × Y one.
+ *
+ * @param {number | bigint} height
+ */
+const emissionAt = (height) =>
+  BigInt(
+    Math.round(
+      Number(
+        nativeRateEstimate({
+          blockTimeSeconds: YEAR * 0.78,
+          provisioners: [{ amount: 1e12, eligibility: 0 }],
+          tipHeight: height,
+        })
+      ) * 1e12
+    )
+  );
 
 describe("the emission schedule", () => {
   it("mints what Rusk 1.7.1's own test expects in each period, 500M DUSK in all", () => {
@@ -35,21 +46,24 @@ describe("the emission schedule", () => {
       return BigInt(whole) * LUX + BigInt(fraction.padEnd(9, "0"));
     });
     const PERIOD = 12_614_400;
-    // Each period's blocks, p·PERIOD + 1 to (p + 1)·PERIOD, as Rusk's test
-    // sums them, against the heights each entry of the schedule holds for.
-    const periods = expected.map((_, p) => {
-      let sum = 0n;
+    /**
+     * What blocks `from` to `to` mint. The emission never rises, so ends
+     * that mint the same hold for every block between them.
+     *
+     * @param {number} from
+     * @param {number} to
+     * @returns {bigint}
+     */
+    const minted = (from, to) => {
+      const first = emissionAt(from);
 
-      EMISSION_SCHEDULE.forEach(({ lastHeight, lux }, i) => {
-        const first = i === 0 ? 0 : EMISSION_SCHEDULE[i - 1].lastHeight + 1;
-        const from = Math.max(first, p * PERIOD + 1);
-        const to = Math.min(lastHeight, (p + 1) * PERIOD);
+      if (first === emissionAt(to)) return BigInt(to - from + 1) * first;
 
-        if (to >= from) sum += BigInt(to - from + 1) * lux;
-      });
+      const middle = Math.floor((from + to) / 2);
 
-      return sum;
-    });
+      return minted(from, middle) + minted(middle + 1, to);
+    };
+    const periods = expected.map((_, p) => minted(p * PERIOD + 1, (p + 1) * PERIOD));
 
     assert.deepEqual(periods, expected);
     assert.equal(
@@ -59,26 +73,33 @@ describe("the emission schedule", () => {
   });
 
   it("gives each height its period's emission, and nothing past the last mint", () => {
-    assert.equal(emissionAt(0), 0n);
-    assert.equal(emissionAt(1), 19_857_400_000n);
-    assert.equal(emissionAt(12_614_400), 19_857_400_000n);
-    assert.equal(emissionAt(12_614_401n), 9_928_700_000n);
-    assert.equal(emissionAt(113_529_596), 77_570_000n);
-    assert.equal(emissionAt(113_529_597), 54_280_000n);
-    assert.equal(emissionAt(113_529_598), 0n);
-    assert.throws(() => emissionAt(-1), RangeError);
-    assert.throws(() => emissionAt(1.5), RangeError);
+    for (const [height, lux] of [
+      [0, 0n],
+      [1, 19_857_400_000n],
+      [12_614_400, 19_857_400_000n],
+      [12_614_401n, 9_928_700_000n],
+      [113_529_596, 77_570_000n],
+      [113_529_597, 54_280_000n],
+      [113_529_598, 0n],
+    ]) {
+      assert.equal(emissionAt(height), lux, String(height));
+    }
+
+    for (const height of [-1, 1.5]) {
+      assert.throws(() => emissionAt(height), TypeError, String(height));
+    }
   });
 });
 
 describe("the eligible stake", () => {
   it("counts stakes of 1,000 DUSK or more that are eligible at the tip: 208,048,559 DUSK on 28 Oct 2026", () => {
-    const stake = eligibleStake(snapshot.provisioners, snapshot.tipHeight);
-    const exact = 208_048_559_344_848_629n;
+    // As one provisioner with all of it.
+    const total = { amount: "208048559344848629", eligibility: 0 };
 
-    // JSON.parse reads two amounts above 2^53 a lux off.
-    assert.ok(stake - exact <= 10n && exact - stake <= 10n, String(stake));
-    assert.equal(stake / LUX, 208_048_559n);
+    assert.equal(
+      nativeRateEstimate(snapshot),
+      nativeRateEstimate({ provisioners: [total], tipHeight: snapshot.tipHeight })
+    );
     assert.equal(
       snapshot.provisioners.filter(
         (/** @type {any} */ p) => p.eligibility <= snapshot.tipHeight && p.amount >= 1e12
@@ -87,25 +108,26 @@ describe("the eligible stake", () => {
     );
   });
 
-  it("takes amounts as strings and bigints exactly, and leaves out the rest", () => {
+  it("takes amounts as numbers, strings and bigints, and leaves out the rest", () => {
     const tip = 100;
+    const counted = [
+      { amount: "208048559344848629", eligibility: 1 },
+      { amount: 1_000_000_000_000n, eligibility: 100 },
+      { amount: 999_999_999_999n, eligibility: 1 },
+      { amount: 5_000_000_000_000, eligibility: 101 },
+      { amount: "abc", eligibility: 1 },
+      { eligibility: 1 },
+      /** @type {any} */ (null),
+    ];
 
     assert.equal(
-      eligibleStake(
-        [
-          { amount: "208048559344848629", eligibility: 1 },
-          { amount: MINIMUM_STAKE_LUX, eligibility: 100 },
-          { amount: MINIMUM_STAKE_LUX - 1n, eligibility: 1 },
-          { amount: 5_000_000_000_000, eligibility: 101 },
-          { amount: "abc", eligibility: 1 },
-          { eligibility: 1 },
-          /** @type {any} */ (null),
-        ],
-        tip
-      ),
-      208_048_559_344_848_629n + MINIMUM_STAKE_LUX
+      nativeRateEstimate({ provisioners: counted, tipHeight: tip }),
+      nativeRateEstimate({
+        provisioners: [{ amount: 208_048_559_344_848_629n + 1_000_000_000_000n, eligibility: 1 }],
+        tipHeight: tip,
+      })
     );
-    assert.throws(() => eligibleStake(/** @type {any} */ ({}), tip), TypeError);
+    assert.throws(() => nativeRateEstimate({ provisioners: /** @type {any} */ ({}), tipHeight: tip }), TypeError);
   });
 });
 
@@ -114,13 +136,9 @@ describe("the reward rates", () => {
     const rate = nativeRateEstimate(snapshot);
 
     assert.equal(percent(rate), 23.5);
-    assert.equal(PROVISIONER_SHARE, 0.78);
-    assert.equal(BLOCK_TIME_SECONDS, 10);
-    // E × s × Y ÷ S, by hand.
+    // E × s × Y ÷ S, by hand: 0.78 of 19.8574 DUSK a block, 10-second blocks.
     assert.ok(
-      Math.abs(
-        Number(rate) - (19.8574 * 0.78 * ((365.25 * 86400) / 10)) / 208_048_559.344848629
-      ) < 1e-12
+      Math.abs(Number(rate) - (19.8574 * 0.78 * (YEAR / 10)) / 208_048_559.344848629) < 1e-12
     );
   });
 

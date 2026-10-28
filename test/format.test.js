@@ -17,24 +17,33 @@ const spaced = (/** @type {string} */ text) => text.replace(/[  ]/g, " ");
 describe("amounts", () => {
   it("shows at most 4 decimals, and 2 significant digits under 0.01", () => {
     assert.deepEqual(formatDusk(1_853_542n, { locale: "en" }), { exact: "0.001853542", text: "0.0019" });
-    assert.equal(formatDusk(173_852_610_026n, { locale: "en" }).text, "173.8526");
-    assert.equal(formatDusk(99_999n, { locale: "en" }).text, "0.0001");
-    assert.equal(formatDusk(12_345n, { locale: "en" }).text, "0.000012");
-    assert.equal(formatDusk(1n, { locale: "en" }).text, "0.000000001");
-    assert.equal(formatDusk(9_999_999n, { locale: "en" }).text, "0.01");
-    assert.equal(formatDusk(10_000_000n, { locale: "en" }).text, "0.01");
-    assert.equal(formatDusk(1_500_000_000n, { locale: "en" }).text, "1.5");
-    assert.equal(formatDusk(0n, { locale: "en" }).text, "0");
-    assert.equal(formatDusk("-500000000", { locale: "en" }).text, "−0.5");
+
+    for (const [lux, text] of [
+      [173_852_610_026n, "173.8526"],
+      [99_999n, "0.0001"],
+      [12_345n, "0.000012"],
+      [1n, "0.000000001"],
+      [9_999_999n, "0.01"],
+      [10_000_000n, "0.01"],
+      [1_500_000_000n, "1.5"],
+      [0n, "0"],
+      ["-500000000", "−0.5"],
+    ]) {
+      assert.equal(formatDusk(lux, { locale: "en" }).text, text, String(lux));
+    }
   });
 
   it("rounds down for balances, up for fees, and to the nearest otherwise", () => {
-    assert.equal(formatDusk(1_853_542n, { locale: "en", round: "down" }).text, "0.0018");
-    assert.equal(formatDusk(1_853_542n, { locale: "en", round: "up" }).text, "0.0019");
-    assert.equal(formatDusk(1_850_000n, { locale: "en" }).text, "0.0019");
-    assert.equal(formatDusk(99_999n, { locale: "en", round: "down" }).text, "0.000099");
-    assert.equal(formatDusk(173_852_650_000n, { locale: "en", round: "down" }).text, "173.8526");
-    assert.equal(formatDusk(173_852_610_001n, { locale: "en", round: "up" }).text, "173.8527");
+    for (const [lux, round, text] of /** @type {const} */ ([
+      [1_853_542n, "down", "0.0018"],
+      [1_853_542n, "up", "0.0019"],
+      [1_850_000n, undefined, "0.0019"],
+      [99_999n, "down", "0.000099"],
+      [173_852_650_000n, "down", "173.8526"],
+      [173_852_610_001n, "up", "173.8527"],
+    ])) {
+      assert.equal(formatDusk(lux, { locale: "en", round }).text, text, `${lux} ${round}`);
+    }
   });
 
   it("never shows an amount that isn't 0 as 0, nor past it the wrong way", () => {
@@ -99,42 +108,36 @@ describe("times", () => {
   const now = Date.UTC(2026, 9, 28, 13, 5, 9);
   const amsterdam = { locale: "nl-NL", now, timeZone: "Europe/Amsterdam" };
 
-  it("says today and yesterday, in English, with the zone", () => {
-    assert.equal(formatTime(now, amsterdam), "Today, 14:05 CET");
-    assert.equal(formatTime(Date.UTC(2026, 9, 27, 22, 59), amsterdam), "Yesterday, 23:59 CET");
-    assert.equal(formatTime(Date.UTC(2026, 9, 27, 23, 1), amsterdam), "Today, 00:01 CET");
+  it("says today and yesterday, dates older moments, and gives the weekday, year and seconds when asked", () => {
+    for (const [date, options, expected] of /** @type {const} */ ([
+      [now, {}, "Today, 14:05 CET"],
+      [Date.UTC(2026, 9, 27, 22, 59), {}, "Yesterday, 23:59 CET"],
+      [Date.UTC(2026, 9, 27, 23, 1), {}, "Today, 00:01 CET"],
+      [Date.UTC(2026, 9, 26, 8, 12), {}, "26 Oct, 09:12 CET"],
+      [Date.UTC(2025, 9, 26, 8, 12), {}, "26 Oct 2025, 09:12 CET"],
+      [new Date(Date.UTC(2026, 6, 1, 12, 0)), {}, "1 Jul, 14:00 CEST"],
+      [now, { date: "full" }, "Wed 28 Oct 2026, 14:05 CET"],
+      [now, { seconds: true }, "Today, 14:05:09 CET"],
+      ["2026-10-28T13:05:09Z", { date: "full", seconds: true }, "Wed 28 Oct 2026, 14:05:09 CET"],
+    ])) {
+      assert.equal(formatTime(date, { ...amsterdam, ...options }), expected);
+    }
   });
 
-  it("dates older moments, with the year when it isn't this one", () => {
-    assert.equal(formatTime(Date.UTC(2026, 9, 26, 8, 12), amsterdam), "26 Oct, 09:12 CET");
-    assert.equal(formatTime(Date.UTC(2025, 9, 26, 8, 12), amsterdam), "26 Oct 2025, 09:12 CET");
-    assert.equal(formatTime(new Date(Date.UTC(2026, 6, 1, 12, 0)), amsterdam), "1 Jul, 14:00 CEST");
-  });
-
-  it("gives the weekday and the year in full, and seconds when asked", () => {
-    assert.equal(formatTime(now, { ...amsterdam, date: "full" }), "Wed 28 Oct 2026, 14:05 CET");
-    assert.equal(formatTime(now, { ...amsterdam, seconds: true }), "Today, 14:05:09 CET");
-    assert.equal(
-      formatTime("2026-10-28T13:05:09Z", { ...amsterdam, date: "full", seconds: true }),
-      "Wed 28 Oct 2026, 14:05:09 CET"
-    );
-  });
-
-  it("follows the locale's clock, and keeps the words English", () => {
-    const newYork = { locale: "en-US", now, timeZone: "America/New_York" };
-
-    assert.equal(spaced(formatTime(now, newYork)), "Today, 9:05 AM EDT");
-    assert.equal(spaced(formatTime(now, { ...newYork, date: "full" })), "Wed 28 Oct 2026, 9:05 AM EDT");
-    assert.equal(spaced(formatTime(now, { locale: "ko-KR", now, timeZone: "Asia/Seoul" })), "Today, 10:05 PM GMT+9");
-    assert.equal(formatTime(now, { locale: "ja-JP", now, timeZone: "Asia/Tokyo" }), "Today, 22:05 JST");
-    assert.equal(formatTime(now, { locale: "de-DE", now, timeZone: "Europe/Berlin" }), "Today, 14:05 CET");
-  });
-
-  it("names the zone in letters where Intl has them, else as GMT and the offset", () => {
-    assert.equal(formatTime(now, { locale: "en-GB", now, timeZone: "Europe/London" }), "Today, 13:05 GMT");
-    assert.equal(formatTime(now, { locale: "de-DE", now, timeZone: "UTC" }), "Today, 13:05 UTC");
-    assert.equal(spaced(formatTime(now, { locale: "en-IN", now, timeZone: "Asia/Kolkata" })), "Today, 6:35 pm IST");
-    assert.equal(formatTime(now, { locale: "nl-NL", now, timeZone: "Asia/Kathmandu" }), "Today, 18:50 GMT+5:45");
+  it("follows the locale's clock with English words, and names the zone in letters, else as GMT and the offset", () => {
+    for (const [locale, timeZone, expected, options] of /** @type {const} */ ([
+      ["en-US", "America/New_York", "Today, 9:05 AM EDT", {}],
+      ["en-US", "America/New_York", "Wed 28 Oct 2026, 9:05 AM EDT", { date: "full" }],
+      ["ko-KR", "Asia/Seoul", "Today, 10:05 PM GMT+9", {}],
+      ["ja-JP", "Asia/Tokyo", "Today, 22:05 JST", {}],
+      ["de-DE", "Europe/Berlin", "Today, 14:05 CET", {}],
+      ["en-GB", "Europe/London", "Today, 13:05 GMT", {}],
+      ["de-DE", "UTC", "Today, 13:05 UTC", {}],
+      ["en-IN", "Asia/Kolkata", "Today, 6:35 pm IST", {}],
+      ["nl-NL", "Asia/Kathmandu", "Today, 18:50 GMT+5:45", {}],
+    ])) {
+      assert.equal(spaced(formatTime(now, { locale, now, timeZone, ...options })), expected, `${locale} ${timeZone}`);
+    }
   });
 
   it("refuses what isn't a date", () => {

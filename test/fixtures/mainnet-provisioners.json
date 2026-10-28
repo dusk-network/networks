@@ -1,26 +1,10 @@
 {
- "about": "Mainnet's /on/node/provisioners on 28 Oct 2026, read at tip 5,609,919, keeping only amount and eligibility (lux and block heights). 176 of the 267 are eligible with at least 1,000 DUSK: 208,048,559.344848629 DUSK (JSON.parse reads two amounts above 2^53 a lux off).",
+ "about": "Mainnet's /on/node/provisioners on 28 Oct 2026, read at tip 5,609,919: the 176 of 267 that count, eligible with at least 1,000 DUSK, keeping only amount and eligibility (lux and block heights). They stake 208,048,559.344848629 DUSK (JSON.parse reads two amounts above 2^53 a lux off).",
  "tipHeight": 5609919,
  "provisioners": [
   {
-   "amount": 766452623510,
-   "eligibility": 2075760
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 686914829515,
-   "eligibility": 5559840
-  },
-  {
    "amount": 1000000000000,
    "eligibility": 3386880
-  },
-  {
-   "amount": 808920000000,
-   "eligibility": 2922480
   },
   {
    "amount": 100000000000000,
@@ -43,16 +27,8 @@
    "eligibility": 5503680
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1037615400000000,
    "eligibility": 3259440
-  },
-  {
-   "amount": 453324211200,
-   "eligibility": 2829600
   },
   {
    "amount": 272510000000000,
@@ -75,32 +51,12 @@
    "eligibility": 4978800
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 964800000000,
-   "eligibility": 3805920
-  },
-  {
-   "amount": 987614208000,
-   "eligibility": 3754080
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 339900831481538,
    "eligibility": 5412960
   },
   {
    "amount": 3650000000000,
    "eligibility": 5091120
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 4385000000000,
@@ -111,24 +67,12 @@
    "eligibility": 5184000
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1469117729565215,
    "eligibility": 5557680
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 703113600000000,
    "eligibility": 3246480
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 1000000000000,
@@ -137,22 +81,6 @@
   {
    "amount": 13102790940789547,
    "eligibility": 4799520
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 900000000000,
-   "eligibility": 339120
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 1470100127216581,
@@ -167,10 +95,6 @@
    "eligibility": 5093280
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1000000000000,
    "eligibility": 4963680
   },
@@ -179,20 +103,8 @@
    "eligibility": 4320000
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 3600000000000000,
    "eligibility": 5404320
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 900000000000,
-   "eligibility": 4911840
   },
   {
    "amount": 505938800000000,
@@ -219,10 +131,6 @@
    "eligibility": 5607360
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1284457600000000,
    "eligibility": 5369760
   },
@@ -231,36 +139,12 @@
    "eligibility": 0
   },
   {
-   "amount": 736495200000,
-   "eligibility": 4929120
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 900900000000,
-   "eligibility": 3939840
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 441098000000000,
    "eligibility": 5093280
   },
   {
-   "amount": 900000000000,
-   "eligibility": 5088960
-  },
-  {
    "amount": 5481384376291394,
    "eligibility": 4639680
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 795400000000000,
@@ -271,28 +155,12 @@
    "eligibility": 5428080
   },
   {
-   "amount": 900000000000,
-   "eligibility": 3486240
-  },
-  {
    "amount": 113500000000000,
    "eligibility": 5026320
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 1000000000000,
-   "eligibility": 5611680
-  },
-  {
    "amount": 2552800498382704,
    "eligibility": 5566320
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 165000000000000,
@@ -303,20 +171,8 @@
    "eligibility": 5557680
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 2764308509615682,
    "eligibility": 5562000
-  },
-  {
-   "amount": 643875373787,
-   "eligibility": 5015520
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 145560198993786,
@@ -329,10 +185,6 @@
   {
    "amount": 1119246300000000,
    "eligibility": 4216320
-  },
-  {
-   "amount": 410519188800,
-   "eligibility": 5343840
   },
   {
    "amount": 534746000000000,
@@ -371,24 +223,12 @@
    "eligibility": 5553360
   },
   {
-   "amount": 414737255710,
-   "eligibility": 4983120
-  },
-  {
    "amount": 7584500000000000,
    "eligibility": 5196960
   },
   {
    "amount": 320048310084709,
    "eligibility": 3246480
-  },
-  {
-   "amount": 923892480000,
-   "eligibility": 4698000
-  },
-  {
-   "amount": 913500000000,
-   "eligibility": 1073520
   },
   {
    "amount": 1227430000000000,
@@ -415,10 +255,6 @@
    "eligibility": 4386960
   },
   {
-   "amount": 556567200000,
-   "eligibility": 4708800
-  },
-  {
    "amount": 6691088768233,
    "eligibility": 5508000
   },
@@ -431,24 +267,8 @@
    "eligibility": 5471280
   },
   {
-   "amount": 900000000000,
-   "eligibility": 4443120
-  },
-  {
    "amount": 2819179807677254,
    "eligibility": 5566320
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 900000000000,
-   "eligibility": 5056560
   },
   {
    "amount": 6038075000000000,
@@ -471,10 +291,6 @@
    "eligibility": 4875120
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 345000263704787,
    "eligibility": 5296320
   },
@@ -485,10 +301,6 @@
   {
    "amount": 956569000000000,
    "eligibility": 5274720
-  },
-  {
-   "amount": 811671840000,
-   "eligibility": 5397840
   },
   {
    "amount": 1001000000000,
@@ -503,32 +315,16 @@
    "eligibility": 168480
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 73500000000000,
    "eligibility": 5492880
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 122481620770658,
    "eligibility": 2741040
   },
   {
-   "amount": 927144000000,
-   "eligibility": 5335200
-  },
-  {
    "amount": 194770000000000,
    "eligibility": 5138640
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 3010008000000000,
@@ -537,10 +333,6 @@
   {
    "amount": 2607178093412592,
    "eligibility": 5562000
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 1214600000000000,
@@ -559,10 +351,6 @@
    "eligibility": 3319920
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1480117682055020,
    "eligibility": 5557680
   },
@@ -575,10 +363,6 @@
    "eligibility": 4471200
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1599317377935320,
    "eligibility": 5557680
   },
@@ -589,10 +373,6 @@
   {
    "amount": 4607479455769948,
    "eligibility": 5572800
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 153346000000000,
@@ -623,14 +403,6 @@
    "eligibility": 5594400
   },
   {
-   "amount": 925200000000,
-   "eligibility": 648000
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 55333000000000,
    "eligibility": 5088960
   },
@@ -647,36 +419,16 @@
    "eligibility": 5551200
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 10700000000000,
    "eligibility": 5583600
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 54409000000000,
    "eligibility": 0
   },
   {
-   "amount": 516650400000,
-   "eligibility": 4909680
-  },
-  {
    "amount": 101101000000000,
    "eligibility": 2957040
-  },
-  {
-   "amount": 1000000000000,
-   "eligibility": 5611680
-  },
-  {
-   "amount": 913248000000,
-   "eligibility": 4769280
   },
   {
    "amount": 98920000000000,
@@ -707,32 +459,12 @@
    "eligibility": 5279040
   },
   {
-   "amount": 999810000000,
-   "eligibility": 4987440
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 997920000000,
-   "eligibility": 4568400
-  },
-  {
    "amount": 1469741335997089,
    "eligibility": 5557680
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 5450000000000,
    "eligibility": 4423680
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 150000000000000,
@@ -749,10 +481,6 @@
   {
    "amount": 124500000000000,
    "eligibility": 4838400
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 115965050728897,
@@ -779,10 +507,6 @@
    "eligibility": 5140800
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 565416000000000,
    "eligibility": 5099760
   },
@@ -799,10 +523,6 @@
    "eligibility": 2395440
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1475726570696954,
    "eligibility": 5557680
   },
@@ -815,24 +535,8 @@
    "eligibility": 5566320
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 25589000000000,
    "eligibility": 5525280
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 986400000000,
-   "eligibility": 308880
   },
   {
    "amount": 1322350415369159,
@@ -841,10 +545,6 @@
   {
    "amount": 1379029000000000,
    "eligibility": 5456160
-  },
-  {
-   "amount": 791378022298,
-   "eligibility": 2913840
   },
   {
    "amount": 3529581000000000,
@@ -867,10 +567,6 @@
    "eligibility": 5557680
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 3250000000000,
    "eligibility": 4548960
   },
@@ -879,28 +575,12 @@
    "eligibility": 4996080
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 60000000000000,
    "eligibility": 5145120
   },
   {
    "amount": 59820000000000,
    "eligibility": 4548960
-  },
-  {
-   "amount": 745920000000,
-   "eligibility": 4335120
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 113351011200,
-   "eligibility": 5151600
   },
   {
    "amount": 199750000000000,
@@ -915,32 +595,12 @@
    "eligibility": 4993920
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 900000000000,
-   "eligibility": 5315760
-  },
-  {
    "amount": 525287000000000,
    "eligibility": 4771440
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1474405021825138,
    "eligibility": 5557680
-  },
-  {
-   "amount": 826691873624,
-   "eligibility": 3203280
   },
   {
    "amount": 498892742686576,
@@ -957,10 +617,6 @@
   {
    "amount": 76000000000000,
    "eligibility": 4756320
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 13518000000000,
@@ -987,10 +643,6 @@
    "eligibility": 5162400
   },
   {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
    "amount": 1474041177735836,
    "eligibility": 5557680
   },
@@ -1009,10 +661,6 @@
   {
    "amount": 367935000000000,
    "eligibility": 5574960
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 2503690000000000,
@@ -1045,18 +693,6 @@
   {
    "amount": 26000000000000,
    "eligibility": 5520960
-  },
-  {
-   "amount": 1000000000000,
-   "eligibility": 5611680
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
-  },
-  {
-   "amount": 0,
-   "eligibility": 0
   },
   {
    "amount": 201395000000000,

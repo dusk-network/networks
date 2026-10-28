@@ -1,7 +1,6 @@
 /**
- * How the apps write amounts, times and IDs. Pure: Intl only, and nothing
- * read from the page. The locale and the time zone default to the
- * browser's; pass them for results that don't depend on the machine.
+ * How the apps write amounts, times and IDs, with Intl only. The locale and
+ * the zone default to the browser's.
  *
  * @module
  */
@@ -133,18 +132,9 @@ function shortDecimals(lux) {
 }
 
 /**
- * An amount of DUSK, from lux.
- *
- * - `short` (the default, for lists and first screens): at most 4 decimals,
- *   but 2 significant digits under 0.01 (0.001853542 → 0.0019), trailing
- *   zeros dropped. An amount that isn't 0 never shows as 0.
- * - `exact` (for details): all 9 decimals, trailing zeros trimmed.
- *
- * `round` is `down` for balances and what can be spent (never more than
- * there is), `up` for fees (never less than is paid) and `nearest`
- * otherwise, half up; it applies to the size of the amount. Separators and
- * digits are the locale's. `exact` is always the whole amount, for a title
- * or a tap to reveal it.
+ * `round` applies to the amount's size: down for balances and what can be
+ * spent (never more than there is), up for fees (never less than is paid),
+ * else to the nearest, half up.
  *
  * @param {bigint | number | string} lux
  * @param {{ mode?: "short" | "exact", round?: "down" | "up" | "nearest", locale?: string }} [options]
@@ -181,9 +171,6 @@ export function formatDusk(
 }
 
 /**
- * An amount for a file or an input's value: every decimal, a point and no
- * grouping, whatever the locale.
- *
  * @param {bigint | number | string} lux
  * @returns {string}
  */
@@ -311,14 +298,6 @@ function dayNumber(timeZone, at) {
 }
 
 /**
- * A moment as the apps show it, in English, the apps' language:
- * "Today, 14:05 CET", "Yesterday, 23:59 CET", "26 Oct, 09:12 CET", or with
- * the year when it isn't this one. `date: "full"` always gives the weekday
- * and the year: "Wed 28 Oct 2026, 14:05 CET". The clock (12 or 24 hours)
- * and the digits follow the locale; seconds only when asked, for technical
- * rows. The zone is a short name where Intl has letters for it, else a
- * "GMT+1" form.
- *
  * @param {Date | number | string} date
  * @param {{
  *   seconds?: boolean,
@@ -400,8 +379,7 @@ const middle = (text, head, tail) =>
     : text;
 
 /**
- * A Dusk contract ID: lower-case hex without 0x, so it doesn't look like the
- * EVM addresses beside it. `short` keeps 6 characters at each end.
+ * Without 0x, so it doesn't look like the EVM addresses beside it.
  *
  * @param {string} hex With or without 0x, in any case
  * @param {{ short?: boolean }} [options]
@@ -418,9 +396,6 @@ export function formatContractId(hex, { short = false } = {}) {
 }
 
 /**
- * A Dusk account (a base58 public key) with its middle cut out: 6
- * characters at each end.
- *
  * @param {string} account
  * @returns {string}
  */
@@ -433,9 +408,6 @@ export function shortAccount(account) {
 }
 
 /**
- * An EVM address with its EIP-55 checksum, and 0x. `short` keeps 0x and 4
- * characters, and the last 4.
- *
  * @param {string} address
  * @param {{ short?: boolean }} [options]
  * @returns {string}

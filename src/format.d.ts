@@ -1,6 +1,9 @@
 /**
- * An amount of DUSK from lux: `text` as the mode and rounding say, `exact`
- * always the whole amount (for a title or a tap to reveal it).
+ * An amount of DUSK from lux. `short` (the default): at most 4 decimals, but
+ * 2 significant digits under 0.01, and never 0 for an amount that isn't;
+ * `exact`: all 9, trailing zeros trimmed. Round `down` for balances, `up`
+ * for fees. The locale's separators and digits; `exact` is always the whole
+ * amount, for a title or a tap to reveal it.
  */
 export declare function formatDusk(
   lux: bigint | number | string,
@@ -14,7 +17,11 @@ export declare function formatDusk(
 /** Every decimal, a point and no grouping: for a file or an input's value. */
 export declare function formatDuskPlain(lux: bigint | number | string): string;
 
-/** "Today, 14:05 CET", "26 Oct, 09:12 CET", or with `date: "full"`, "Wed 28 Oct 2026, 14:05 CET". */
+/**
+ * "Today, 14:05 CET", "26 Oct, 09:12 CET", or with `date: "full"`, "Wed 28
+ * Oct 2026, 14:05 CET": English words, the locale's clock and digits, and
+ * seconds only when asked.
+ */
 export declare function formatTime(
   date: Date | number | string,
   options?: {

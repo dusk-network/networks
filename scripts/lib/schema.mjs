@@ -4,31 +4,21 @@
  * rule can't be skipped without notice.
  */
 
-const ANNOTATIONS = new Set([
-  "$comment",
-  "$id",
+/** The keywords checked here, after three annotations with nothing to check. */
+const KEYWORDS = new Set([
   "$schema",
   "description",
-  "examples",
   "title",
-]);
-
-const KEYWORDS = new Set([
-  ...ANNOTATIONS,
   "$defs",
   "$ref",
   "additionalProperties",
   "anyOf",
-  "const",
   "enum",
   "items",
-  "maxItems",
   "maximum",
-  "minItems",
   "minLength",
   "minimum",
   "pattern",
-  "patternProperties",
   "properties",
   "propertyNames",
   "required",
@@ -37,26 +27,17 @@ const KEYWORDS = new Set([
 ]);
 
 /**
- * A value as JSON with every object's keys sorted, so two values JSON
- * Schema calls equal give the same text whatever order their keys are in.
+ * A value as JSON with every object's keys sorted, so values JSON Schema
+ * calls equal give the same text whatever order their keys are in.
  *
  * @param {unknown} value
- * @returns {string}
  */
-function canonical(value) {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-
-  if (value && typeof value === "object") {
-    const record = /** @type {Record<string, unknown>} */ (value);
-
-    return `{${Object.keys(record)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`)
-      .join(",")}}`;
-  }
-
-  return JSON.stringify(value);
-}
+const canonical = (value) =>
+  JSON.stringify(value, (_, item) =>
+    item && typeof item === "object" && !Array.isArray(item)
+      ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : item
+  );
 
 /** @param {unknown} value */
 function typeOf(value) {
@@ -65,16 +46,6 @@ function typeOf(value) {
   if (typeof value === "number") return Number.isInteger(value) ? "integer" : "number";
   return typeof value;
 }
-
-/**
- * @param {string} wanted
- * @param {unknown} value
- */
-const isType = (wanted, value) => {
-  const actual = typeOf(value);
-
-  return actual === wanted || (wanted === "number" && actual === "integer");
-};
 
 /**
  * Every place `data` breaks `schema`, as "path: what's wrong".
@@ -113,15 +84,12 @@ export function validate(root, data) {
 
     if (schema.type !== undefined) {
       const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+      const actual = typeOf(value);
 
-      if (!types.some((t) => isType(t, value))) {
-        errors.push(`${path}: should be ${types.join(" or ")}, is ${typeOf(value)}`);
+      if (!types.some((/** @type {string} */ t) => t === actual || (t === "number" && actual === "integer"))) {
+        errors.push(`${path}: should be ${types.join(" or ")}, is ${actual}`);
         return;
       }
-    }
-
-    if ("const" in schema && canonical(schema.const) !== canonical(value)) {
-      errors.push(`${path}: should be ${JSON.stringify(schema.const)}`);
     }
 
     if (schema.enum && !schema.enum.some((/** @type {unknown} */ e) => canonical(e) === canonical(value))) {
@@ -162,12 +130,6 @@ export function validate(root, data) {
     }
 
     if (Array.isArray(value)) {
-      if (schema.minItems !== undefined && value.length < schema.minItems) {
-        errors.push(`${path}: fewer than ${schema.minItems} items`);
-      }
-      if (schema.maxItems !== undefined && value.length > schema.maxItems) {
-        errors.push(`${path}: more than ${schema.maxItems} items`);
-      }
       if (schema.uniqueItems) {
         const seen = value.map(canonical);
 
@@ -187,23 +149,12 @@ export function validate(root, data) {
 
       for (const [key, item] of Object.entries(record)) {
         const at = `${path}.${key}`;
-        let known = false;
 
         if (schema.propertyNames) check(schema.propertyNames, key, `${at} (name)`, errors);
 
         if (schema.properties && Object.hasOwn(schema.properties, key)) {
-          known = true;
           check(schema.properties[key], item, at, errors);
-        }
-
-        for (const [pattern, sub] of Object.entries(schema.patternProperties ?? {})) {
-          if (new RegExp(pattern, "u").test(key)) {
-            known = true;
-            check(sub, item, at, errors);
-          }
-        }
-
-        if (!known && schema.additionalProperties !== undefined) {
+        } else if (schema.additionalProperties !== undefined) {
           check(schema.additionalProperties, item, at, errors);
         }
       }

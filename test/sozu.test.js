@@ -8,7 +8,6 @@ import {
   HUB_NAME_ARGS,
   SOZU_FN,
   SOZU_GAS,
-  SUBSTRATE_KINDS,
   decodeContractId,
   decodeSwitch,
   decodeU64,
@@ -242,7 +241,6 @@ describe("Sozu's replies", () => {
     }
     // As Sozu's hub data driver encodes "pool".
     assert.deepEqual(Array.from(bytes(HUB_NAME_ARGS.pool)), [112, 111, 111, 108, 0, 0, 0, 4]);
-    assert.deepEqual(SUBSTRATE_KINDS, { deposit: 0, maintenance: 0, reward: 1, synchronization: 1 });
   });
 });
 

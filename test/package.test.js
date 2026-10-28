@@ -72,6 +72,7 @@ describe("the package", () => {
       "schema.json",
       "src/format.d.ts",
       "src/format.js",
+      "src/hex.js",
       "src/index.d.ts",
       "src/index.js",
       "src/keccak.js",

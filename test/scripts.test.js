@@ -110,20 +110,24 @@ describe("the Multicall envelope", () => {
 
 describe("the schema check", () => {
   it("refuses a keyword it doesn't check, so no rule is skipped", () => {
-    assert.throws(() => validate({ type: "string", format: "uri" }, "x"), /format/);
-    assert.throws(() => validate({ $ref: "#/$defs/missing" }, "x"), /missing/);
+    for (const [schema, keyword] of [
+      [{ type: "string", format: "uri" }, /format/],
+      [{ const: 1 }, /const/],
+      [{ $ref: "#/$defs/missing" }, /missing/],
+    ]) {
+      assert.throws(() => validate(schema, "x"), keyword);
+    }
   });
 
-  it("compares items, and constants, whatever order their keys are in", () => {
+  it("compares items and choices whatever order their keys are in", () => {
     const unique = { items: { type: "object" }, type: "array", uniqueItems: true };
 
     assert.deepEqual(validate(unique, [{ a: 1, b: [1, { c: 2, d: 3 }] }, { b: [1, { d: 3, c: 2 }], a: 1 }]), [
       "$: items repeat",
     ]);
     assert.deepEqual(validate(unique, [{ a: 1, b: 2 }, { a: 2, b: 1 }]), []);
-    assert.deepEqual(validate({ const: { a: 1, b: 2 } }, { b: 2, a: 1 }), []);
     assert.deepEqual(validate({ enum: [{ a: 1, b: 2 }] }, { b: 2, a: 1 }), []);
-    assert.equal(validate({ const: { a: 1, b: 2 } }, { a: 1, b: 3 }).length, 1);
+    assert.equal(validate({ enum: [{ a: 1, b: 2 }] }, { a: 1, b: 3 }).length, 1);
   });
 
   it("checks references, options and extra keys", () => {

@@ -67,13 +67,6 @@ export declare const HUB_NAME_ARGS: Readonly<{
   vault: string;
 }>;
 
-export declare const SUBSTRATE_KINDS: Readonly<{
-  deposit: 0;
-  maintenance: 0;
-  reward: 1;
-  synchronization: 1;
-}>;
-
 export declare function encodeU64(value: bigint): Uint8Array;
 export declare function parsePool(rate: unknown): SozuPool;
 export declare function parseFeeRate(bytes: Uint8Array): SozuFeeRate;
