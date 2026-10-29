@@ -4,12 +4,17 @@ import { describe, it } from "node:test";
 import {
   GAME_STATUS,
   OVERDUE_SECONDS,
+  beforeProofText,
+  claimAfterProving,
   claimFrom,
   claimReadiness,
+  claimText,
   contractClock,
   contractNow,
   isCandidateGame,
   isEligibleGame,
+  proveNowText,
+  provingAfterSending,
   wallTime,
 } from "../src/duskevm.js";
 import { formatTime } from "../src/format.js";
@@ -294,5 +299,64 @@ describe("the games a proof can go against", () => {
 
     assert.equal(isCandidateGame({ ...game, createdAt: 1_000n }, rules), false);
     assert.equal(isCandidateGame({ ...game, l2BlockNumber: 499n }, rules), false);
+  });
+});
+
+describe("a claim date in words, as the bridge and the web wallet write it", () => {
+  it("after the proof: the date, about until its game resolves", () => {
+    const now = claimFrom({ game: GAME, portal: PORTAL, provenAt: PROVEN_AT, tip: TIP });
+    // Resolved at the resolver's median, 161 blocks after its earliest.
+    const resolved = claimFrom({
+      game: { ...GAME, resolvedAt: GAME.createdAt + MAX_CLOCK + 1_610n, status: 2 },
+      portal: PORTAL,
+      provenAt: PROVEN_AT,
+      tip: TIP,
+    });
+
+    assert.equal(claimText(now, when), "Claim from about 2 Nov, 04:20 CET");
+    assert.equal(claimText(resolved, when), "Claim from 2 Nov, 04:24 CET");
+    assert.equal(claimText({ at: Date.UTC(2026, 10, 2, 3, 20, 39), exact: false, overdue: false }, when), "Claim from about 2 Nov, 04:20 CET");
+    assert.equal(claimText({ at: null }, when), "");
+    assert.equal(claimText(null, when), "");
+  });
+
+  it("at the soonest, once its game is late to resolve", () => {
+    const settles = GAME.createdAt + MAX_CLOCK;
+    // A block more than an hour (360 blocks) past its clock.
+    const height = settles / 10n + 361n;
+    const overdue = claimFrom({
+      game: GAME,
+      portal: PORTAL,
+      provenAt: PROVEN_AT,
+      tip: { height, timestamp: TIP.timestamp + 10n * (height - TIP.height) },
+    });
+
+    assert.equal(claimText(overdue, when), "Waiting for DuskEVM to settle this proof. Claim from 2 Nov, 04:57 CET at the soonest.");
+    assert.equal(
+      claimText({ at: Date.UTC(2026, 10, 2, 3, 57, 39), exact: false, overdue: true }, when),
+      "Waiting for DuskEVM to settle this proof. Claim from 2 Nov, 04:57 CET at the soonest."
+    );
+  });
+
+  it("on the prove review: when a proof made now can be claimed", () => {
+    // Against a resolved game: exactly the maturity from now. The tip is 28 Oct, 03:09:49 UTC.
+    const resolved = claimFrom({ game: { ...GAME, resolvedAt: 45_555_010n, status: 2 }, portal: PORTAL, tip: TIP });
+    // Against the newest game: an estimate.
+    const newest = claimFrom({ game: { ...GAME, createdAt: 47_048_050n }, portal: PORTAL, tip: TIP });
+
+    assert.equal(proveNowText(resolved, when), "If you prove now, you can claim from 4 Nov, 04:09 CET");
+    assert.match(proveNowText(newest, when), /^If you prove now, you can claim from about /u);
+    assert.equal(proveNowText({ ...resolved, exact: false }, when), "If you prove now, you can claim from about 4 Nov, 04:09 CET");
+    assert.equal(proveNowText(null, when), "");
+  });
+
+  it("before the proof: the wait, from what the chain said", () => {
+    assert.equal(beforeProofText({ maturity: 604_800, prove: 1_700 }), "Claim 7 days after you prove. You can prove about 30 minutes after sending.");
+    assert.equal(beforeProofText({ maturity: 302_400 }), "Claim 3 days 12 hours after you prove.");
+    assert.equal(beforeProofText({ prove: 1_700 }), "");
+    assert.equal(beforeProofText(null), "");
+    assert.equal(claimAfterProving(PORTAL.proofMaturityDelaySeconds), "Claim 7 days after you prove.");
+    assert.equal(provingAfterSending(60), "You can prove about 1 minute after sending.");
+    assert.equal(provingAfterSending(3_600), "You can prove about 1 hour after sending.");
   });
 });

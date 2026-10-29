@@ -431,3 +431,84 @@ export function formatEvmAddress(address, { short = false } = {}) {
 
   return short ? middle(full, 6, 4) : full;
 }
+
+/**
+ * Rounded up on a scale that reads at a glance: to the minute up to 10
+ * minutes, then to 5 minutes, to 10 minutes from an hour to 90 minutes, then
+ * to hours, and from 48 hours to days.
+ *
+ * @param {number | bigint} seconds
+ * @returns {string}
+ */
+export function aboutTime(seconds) {
+  let minutes = Math.max(1, Math.ceil(Number(seconds) / 60));
+
+  if (minutes > 10 && minutes < 60) {
+    minutes = Math.ceil(minutes / 5) * 5;
+  } else if (minutes > 60 && minutes <= 90) {
+    minutes = Math.ceil(minutes / 10) * 10;
+  }
+
+  if (minutes < 60) {
+    return `~${minutes} min`;
+  }
+
+  if (minutes === 60) {
+    return "~1 hour";
+  }
+
+  if (minutes <= 90) {
+    return `~${minutes} min`;
+  }
+
+  const hours = Math.round(minutes / 60);
+
+  return hours < 48 ? `~${hours} hours` : `~${Math.round(minutes / 1_440)} days`;
+}
+
+/**
+ * @param {number | bigint} seconds
+ * @returns {string}
+ */
+export function aboutWords(seconds) {
+  const text = aboutTime(seconds);
+  const minutes = /^~(\d+) min$/u.exec(text);
+
+  if (minutes) {
+    return `about ${minutes[1]} minute${minutes[1] === "1" ? "" : "s"}`;
+  }
+
+  return text.replace(/^~/u, "about ");
+}
+
+/**
+ * @param {number} n
+ * @param {string} word
+ */
+const unit = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/**
+ * @param {number | bigint} seconds
+ * @returns {string}
+ */
+export function durationWords(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) / 60));
+
+  if (total < 1) {
+    return "less than a minute";
+  }
+
+  const days = Math.floor(total / 1_440);
+  const hours = Math.floor((total % 1_440) / 60);
+  const minutes = total % 60;
+
+  if (days) {
+    return hours ? `${unit(days, "day")} ${unit(hours, "hour")}` : unit(days, "day");
+  }
+
+  if (hours) {
+    return minutes ? `${unit(hours, "hour")} ${unit(minutes, "minute")}` : unit(hours, "hour");
+  }
+
+  return unit(minutes, "minute");
+}

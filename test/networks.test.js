@@ -10,6 +10,7 @@ import {
   labelFor,
   networkFor,
   networks,
+  routeForAccount,
   routes,
 } from "../src/index.js";
 import { validate } from "../scripts/lib/schema.mjs";
@@ -311,6 +312,17 @@ describe("routes", () => {
     assert.equal(withdrawal.chain.chainId, 745);
   });
 
+  it("names the address that pays a route out where it's known: BSC's on mainnet, none on testnet", () => {
+    const [, , bscOut] = routes(1);
+    const [, sepoliaOut] = routes(2);
+
+    assert.ok(bscOut.kind === "service" && sepoliaOut.kind === "service");
+    // The sender of the BEP20 DUSK payouts of Dusk → BSC transfers, as BSC's
+    // logs show it (two payouts checked, 28 Oct 2026).
+    assert.equal(bscOut.payoutAddress, "0xe6D0c4d8CA2C12b357A5b5470c53E86123Ab16da");
+    assert.equal(sepoliaOut.payoutAddress, null);
+  });
+
   it("gives the same frozen list each time", () => {
     assert.equal(routes(1), routes(networks.mainnet));
     assert.ok(Object.isFrozen(routes(1)[0].chain));
@@ -368,5 +380,40 @@ describe("bridgeLink", () => {
     assert.throws(() => bridgeLink(published(networks.mainnet), { route: "bcs" }), RangeError);
     assert.throws(() => bridgeLink(published(networks.mainnet), { route: "toString" }), RangeError);
     assert.throws(() => bridgeLink(published(networks.mainnet), { route: "bsc", to: "0x12/34" }), TypeError);
+  });
+});
+
+describe("routeForAccount", () => {
+  const [bscIn, ethereumIn, bscOut] = routes(1);
+  const [, sepoliaOut] = routes(2);
+  const BSC = bscOut.kind === "service" ? bscOut.account : "";
+  const BSC_PAYOUTS = bscIn.kind === "migration" ? String(bscIn.payoutAccount) : "";
+  const ETHEREUM_PAYOUTS = ethereumIn.kind === "migration" ? String(ethereumIn.payoutAccount) : "";
+
+  it("gives the route of a transfer to a service route's account, or from a migration's payout account", () => {
+    assert.equal(routeForAccount(1, BSC, "out"), bscOut);
+    assert.equal(routeForAccount(1, BSC_PAYOUTS, "in"), bscIn);
+    assert.equal(routeForAccount(networks.mainnet, ` ${ETHEREUM_PAYOUTS}\n`, "in"), ethereumIn);
+    assert.equal(routeForAccount(1, BSC, "out")?.chain.name, "BNB Smart Chain");
+    assert.equal(routeForAccount(1, ETHEREUM_PAYOUTS, "in")?.chain.name, "Ethereum");
+    // Testnet's route to Sepolia, which doesn't run, still has its transfers.
+    assert.equal(routeForAccount(2, sepoliaOut.kind === "service" ? sepoliaOut.account : "", "out")?.chain.name, "Sepolia");
+  });
+
+  it("tells BSC's account apart by the direction: it pays BSC's migrations out and takes transfers to BSC", () => {
+    assert.equal(BSC, BSC_PAYOUTS);
+    assert.equal(routeForAccount(1, BSC, "in")?.id, "bsc-to-dusk");
+    assert.equal(routeForAccount(1, BSC, "out")?.id, "dusk-to-bsc");
+  });
+
+  it("has no route for any other account, direction or network", () => {
+    // A send to an account that only pays migrations out isn't a transfer out.
+    assert.equal(routeForAccount(1, ETHEREUM_PAYOUTS, "out"), null);
+    assert.equal(routeForAccount(2, BSC, "out"), null);
+    assert.equal(routeForAccount(3, BSC, "out"), null);
+    assert.equal(routeForAccount(1, "", "out"), null);
+    assert.equal(routeForAccount(1, /** @type {any} */ (null), "in"), null);
+    assert.throws(() => routeForAccount(1, BSC, /** @type {any} */ ("self")), RangeError);
+    assert.throws(() => routeForAccount(41, BSC, "out"), TypeError);
   });
 });

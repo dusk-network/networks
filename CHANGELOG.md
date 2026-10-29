@@ -2,6 +2,24 @@
 
 All notable changes to this package are listed here. It follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+
+- `/duskevm`: `decodeBridgeCall`, what a deposit to DuskEVM or a withdrawal's proof or claim does, from its arguments
+- `/duskevm`: `decodeWithdrawal` and `duskRecipientOf`, a withdrawal as DuskEVM recorded it and whom it pays on Dusk
+- `/duskevm`: `bridgeEnvelopeOk`, whether a bridge call is sent as the bridge's route expects
+- `/duskevm`: `encodeDepositArgs` and `depositCall`, a deposit's arguments
+- `/duskevm`: `duskEvmContracts` and `isBridgeContract`, DuskEVM's contracts on Dusk
+- `/duskevm`: `evmAddressOf`, the EVM address DuskEVM gives a Dusk contract or account
+- `/duskevm`: a withdrawal's claim date in words
+- `/account`: Dusk accounts checked as keys, to and from their raw keys, and base58
+- `/sozu`: `isSozuCall`, whether a call is a stake or an unstake with Sozu
+- `/gas`: gas for public transfers, DuskEVM deposits and withdrawals, beside Sozu's
+- `/format`: `aboutTime`, `aboutWords` and `durationWords`
+- `routeForAccount`: the route a transfer with one of the bridge's accounts is on
+- `routes.services[].payoutAddress`: the address that pays a route out, for BSC on mainnet
+
 ## [0.2.0]
 
 ### Added

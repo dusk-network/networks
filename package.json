@@ -1,7 +1,7 @@
 {
   "name": "@dusk-network/networks",
-  "version": "0.2.0",
-  "description": "Dusk's networks for the Dusk apps: endpoints, contracts, routes and labels, with Sozu's rules, reward estimates and shared formats.",
+  "version": "0.3.0",
+  "description": "Dusk's networks for the Dusk apps: endpoints, contracts, routes and labels, with Sozu's rules, DuskEVM's bridge calls, accounts, gas, reward estimates and shared formats.",
   "license": "MPL-2.0",
   "type": "module",
   "repository": {
@@ -28,6 +28,14 @@
     "./duskevm": {
       "types": "./src/duskevm.d.ts",
       "default": "./src/duskevm.js"
+    },
+    "./gas": {
+      "types": "./src/gas.d.ts",
+      "default": "./src/gas.js"
+    },
+    "./account": {
+      "types": "./src/account.d.ts",
+      "default": "./src/account.js"
     },
     "./networks/*.json": {
       "types": "./src/network-file.d.ts",

@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import vectors from "../fixtures/sozu-vectors.json" with { type: "json" };
+import { networks } from "../src/index.js";
 import {
   HUB_NAME_ARGS,
   SOZU_FN,
@@ -14,6 +15,7 @@ import {
   duskPerStDusk,
   encodeU64,
   feePercent,
+  isSozuCall,
   leastSozuStake,
   parseFeeRate,
   parsePool,
@@ -439,5 +441,48 @@ describe("reading what an account has with Sozu", () => {
       readSozuStatus({ contracts: { hub: "nope" }, read: () => new Uint8Array(0) }),
       TypeError
     );
+  });
+});
+
+describe("Sozu's calls", () => {
+  const TESTNET_POOL = /** @type {NonNullable<typeof networks.testnet.sozu>} */ (networks.testnet.sozu).fallbacks.pool;
+  const MAINNET_POOL = /** @type {NonNullable<typeof networks.mainnet.sozu>} */ (networks.mainnet.sozu).fallbacks.pool;
+  const HUB = /** @type {NonNullable<typeof networks.testnet.sozu>} */ (networks.testnet.sozu).hub;
+
+  it("are a stake or an unstake on the network's own pool, as its file has it", () => {
+    assert.equal(isSozuCall(networks.testnet, { contractId: TESTNET_POOL, fnName: SOZU_FN.STAKE }), true);
+    assert.equal(isSozuCall(1, { contractId: `0x${MAINNET_POOL.toUpperCase()}`, fnName: SOZU_FN.UNSTAKE }), true);
+    assert.equal(isSozuCall(2, { contractId: ` ${TESTNET_POOL} `, fnName: "sozu_unstake" }), true);
+  });
+
+  it("aren't the pool's other functions, the hub's, another network's pool or anyone else's contract", () => {
+    for (const [net, call] of /** @type {const} */ ([
+      [2, { contractId: TESTNET_POOL, fnName: "balance_of" }],
+      [2, { contractId: HUB, fnName: SOZU_FN.STAKE }],
+      [2, { contractId: "cd".repeat(32), fnName: SOZU_FN.STAKE }],
+      // Each network's own: mainnet's pool on testnet is someone else's contract.
+      [2, { contractId: MAINNET_POOL, fnName: SOZU_FN.STAKE }],
+      [1, { contractId: TESTNET_POOL, fnName: SOZU_FN.UNSTAKE }],
+      [3, { contractId: TESTNET_POOL, fnName: SOZU_FN.STAKE }],
+      [2, { contractId: null, fnName: SOZU_FN.STAKE }],
+      [2, { contractId: TESTNET_POOL, fnName: null }],
+      [2, { fnName: SOZU_FN.STAKE }],
+    ])) {
+      assert.equal(isSozuCall(net, call), false, JSON.stringify([net, call]));
+    }
+
+    assert.throws(() => isSozuCall(41, { contractId: TESTNET_POOL, fnName: SOZU_FN.STAKE }), TypeError);
+  });
+
+  it("are also a pool's its hub named, as `readSozuStatus` gives it", () => {
+    const named = "ef".repeat(32);
+    const call = { contractId: named, fnName: SOZU_FN.STAKE };
+
+    assert.equal(isSozuCall(2, call), false);
+    assert.equal(isSozuCall(2, call, { pools: [`0x${named.toUpperCase()}`] }), true);
+    assert.equal(isSozuCall(2, call, { pools: new Set([named]) }), true);
+    assert.equal(isSozuCall(2, call, { pools: named }), true);
+    assert.equal(isSozuCall(2, { ...call, fnName: "balance_of" }, { pools: [named] }), false);
+    assert.equal(isSozuCall(3, call, { pools: [named] }), false);
   });
 });

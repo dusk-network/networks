@@ -1,6 +1,6 @@
 # @dusk-network/networks
 
-What the Dusk apps need to know about each Dusk network, in one place: endpoints, contract IDs, bridge routes, labels and the recipient blocklist, one JSON file per network. It also holds the rules the apps share: Sozu's amounts and reads, reward-rate estimates, and how amounts, times and IDs are written.
+What the Dusk apps need to know about each Dusk network, in one place: endpoints, contract IDs, bridge routes, labels and the recipient blocklist, one JSON file per network. It also holds the rules the apps share: Sozu's amounts and reads, what a DuskEVM bridge call does, accounts and their keys, gas, reward-rate estimates, and how amounts, times and IDs are written.
 
 The web wallet, the wallet extension, the explorer and the bridge use it.
 
@@ -25,11 +25,13 @@ The entry points are the same on both, under each registry's name: `@dusk-networ
 
 | Import | What it gives |
 |---|---|
-| `@dusk-network/networks` | `networks`, `networkFor(chainId)`, `labelFor(net, id)`, `isBlocked(net, account)`, `blockedReason(net, account)`, `routes(net)`, `bridgeLink(net, { route, to })` |
-| `@dusk-network/networks/sozu` | Sozu's fee, stDUSK and minimum rules, its gas, the hub's argument bytes, the reply decoders and `readSozuStatus` |
+| `@dusk-network/networks` | `networks`, `networkFor(chainId)`, `labelFor(net, id)`, `isBlocked(net, account)`, `blockedReason(net, account)`, `routes(net)`, `routeForAccount(net, account, direction)`, `bridgeLink(net, { route, to })` |
+| `@dusk-network/networks/sozu` | Sozu's fee, stDUSK and minimum rules, its gas, the hub's argument bytes, the reply decoders, `readSozuStatus` and `isSozuCall` |
 | `@dusk-network/networks/rates` | `nativeRateEstimate` and `sozuRateEstimate`, as yearly fractions |
-| `@dusk-network/networks/duskevm` | When a DuskEVM withdrawal can be claimed (`claimFrom`), whether it can be claimed now (`claimReadiness`), the games a proof can go against (`isEligibleGame`), and the contracts' clock |
-| `@dusk-network/networks/format` | `formatDusk`, `formatDuskPlain`, `formatTime`, `formatContractId`, `shortAccount`, `formatEvmAddress` |
+| `@dusk-network/networks/duskevm` | What a call to DuskEVM's bridge does (`decodeBridgeCall`, `decodeWithdrawal`, `duskRecipientOf`, `bridgeEnvelopeOk`), a deposit's arguments (`encodeDepositArgs`, `depositCall`), its contracts (`duskEvmContracts`, `isBridgeContract`, `evmAddressOf`), when a withdrawal can be claimed (`claimFrom`), whether it can be claimed now (`claimReadiness`), the games a proof can go against (`isEligibleGame`), the contracts' clock, and the claim date in words |
+| `@dusk-network/networks/account` | `isAccount`, `accountToRawKey`, `rawKeyToAccount`, `encodeBase58`, `decodeBase58` |
+| `@dusk-network/networks/gas` | Gas for public transfers, DuskEVM deposits and withdrawals (`withdrawalGasLimit`), and Sozu's |
+| `@dusk-network/networks/format` | `formatDusk`, `formatDuskPlain`, `formatTime`, `formatContractId`, `shortAccount`, `formatEvmAddress`, `aboutTime`, `aboutWords`, `durationWords` |
 | `@dusk-network/networks/networks/<name>.json` | `mainnet`, `testnet` or `devnet` as data |
 | `@dusk-network/networks/schema.json` | The files' JSON Schema |
 | `@dusk-network/networks/fixtures/sozu-vectors.json` | The Sozu test vectors both wallets run |
@@ -81,6 +83,26 @@ const claim = claimFrom({ provenAt, game, portal, tip }); // { at, exact, overdu
 claimReadiness({ claim, portalAccepts, tip }).ready; // the Portal's yes counts from the date only
 ```
 
+A call to DuskEVM's bridge reads as what it does, on the network's own bridge and route only, and synchronously, so the extension's service worker can show it:
+
+```js
+import { bridgeEnvelopeOk, decodeBridgeCall } from "@dusk-network/networks/duskevm";
+
+const call = decodeBridgeCall(net, { contractId, fnName, args }); // null for any other call
+if (call?.kind === "deposit" && bridgeEnvelopeOk(call, { amount, deposit })) call.recipient; // the DuskEVM address
+if (call?.kind === "claim") call.recipient; // { kind: "account", account } or { kind: "contract", contractId }
+```
+
+An account is checked as a key, as Dusk checks one, and `/account` gives the raw form a contract takes it in:
+
+```js
+import { accountToRawKey, isAccount } from "@dusk-network/networks/account";
+
+isAccount(input); // false for a typo, not just for the wrong length
+const raw = accountToRawKey(account); // 193 bytes, or null for anything but an account
+Uint8Array.of(1, ...raw); // `Account::External`, as Sozu's stDUSK takes it
+```
+
 The bridge takes a route and a Dusk recipient in its link. `bridgeLink` builds it, and gives null while the network's bridge has no published address:
 
 ```js
@@ -102,12 +124,13 @@ The files hold the IDs an app starts from. These change without a release, so th
 - Short amounts have at most 4 decimals, but 2 significant digits under 0.01; exact amounts have all 9, without trailing zeros. Balances round down, fees up. Separators and digits are the locale's.
 - Times are in English, with the locale's clock, a zone name and no seconds unless asked: "Today, 14:05 CET", "26 Oct, 09:12 CET", "Wed 28 Oct 2026, 14:05:09 CET".
 - Accounts and contract IDs are cut to 6 characters at each end, EVM addresses to 0x and 4, and the last 4, with "…".
+- Estimates round up on a scale that reads at a glance ("~15 min", "~10 hours", "~7 days"); durations are whole words, to the minute ("3 days 12 hours").
 
 ## Updating
 
 1. Edit `networks/<name>.json`. `npm run validate` checks it against the schema, and `npm test` runs the rest.
 2. DuskEVM's contracts come from [duskevm-genesis](https://github.com/dusk-network/duskevm-genesis): `node scripts/gen-duskevm.mjs <checkout>` writes them, and their labels. The name, endpoints, predeploys and drivers stay as written.
-3. `node scripts/check-chain.mjs` reads each network once, through Multicall for Dusk: the hub must name the Sozu fallbacks, every other contract in the file must exist, and the Dusk Domains manifest must match its sha256. It sends nothing.
+3. `node scripts/check-chain.mjs` reads each network once, through Multicall for Dusk: the hub must name the Sozu fallbacks, every other contract in the file must exist, and the Dusk Domains manifest must match its sha256. It asks the chain a route pays out on whether its payout address is an account that has sent transactions there. It sends nothing.
 4. Release it, as below. The apps then bump their pin.
 
 CI runs the version check, the schema, the tests, the type check (`npm run typecheck`), JSR's dry run (`npm run check:jsr`) and the genesis comparison on every push, and `check-chain` every week.

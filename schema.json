@@ -134,11 +134,15 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "chain", "account", "feeLux", "typicalSeconds", "running"],
+            "required": ["id", "chain", "account", "payoutAddress", "feeLux", "typicalSeconds", "running"],
             "properties": {
               "id": { "type": "string", "pattern": "^dusk-to-[a-z][a-z0-9-]*$" },
               "chain": { "type": "string" },
               "account": { "$ref": "#/$defs/account" },
+              "payoutAddress": {
+                "description": "The address on the chain that pays this route out, the sender of its token transfers there, where it's known.",
+                "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/evmAddress" }]
+              },
               "feeLux": { "$ref": "#/$defs/lux" },
               "typicalSeconds": { "$ref": "#/$defs/secondsOrNull" },
               "running": { "type": "boolean" }

@@ -1,19 +1,22 @@
 /**
- * Sozu's liquid staking rules as its contracts (v1.0.0) apply them, and its
- * reads in one query through the app's own batcher. Amounts are lux, as
- * bigints.
+ * Sozu's liquid staking rules as its contracts (v1.0.0) apply them, its
+ * reads in one query through the app's own batcher, and which calls are
+ * Sozu's. Amounts are lux, as bigints.
  *
  * @example
  * ```js
- * import { SOZU_FN, readSozuStatus, sozuCall, sozuStake } from "@dusk/networks/sozu";
+ * import { SOZU_FN, isSozuCall, readSozuStatus, sozuCall, sozuStake } from "@dusk/networks/sozu";
  *
  * const status = await readSozuStatus({ read, contracts: net.sozu, account });
  * sozuStake(1_000_000_000n, status.pool, status.fees?.deposit); // { fee, worth, stDusk, ok }
  * sozuCall(status.contracts.pool, SOZU_FN.STAKE, 1_000_000_000n); // { contractId, deposit, fnArgs, fnName }
+ * isSozuCall(net, tx, { pools: [status.contracts.pool] }); // a stake or an unstake with Sozu
  * ```
  *
  * @module
  */
+
+import type { NetworkRef } from "./index.js";
 
 /** The pool's rate: the DUSK staked through it over the stDUSK there is. */
 export type SozuPool = { stake: bigint; supply: bigint };
@@ -75,6 +78,18 @@ export type SozuStart =
 
 /** The pool's functions a wallet calls. */
 export declare const SOZU_FN: Readonly<{ STAKE: "sozu_stake"; UNSTAKE: "sozu_unstake" }>;
+
+/**
+ * Whether a call is a stake or an unstake with Sozu: `sozu_stake` or
+ * `sozu_unstake` on the network's own pool, as its file has it, or on a pool
+ * its hub named, in `pools`. The same functions on any other contract
+ * aren't Sozu's. Throws a TypeError for a network there's no file for.
+ */
+export declare function isSozuCall(
+  net: NetworkRef,
+  call: { contractId?: string | null; fnName?: string | null },
+  options?: { pools?: Iterable<string> }
+): boolean;
 
 /**
  * Gas for a wallet's own calls of the pool, at the node's price: the limit,

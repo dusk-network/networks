@@ -8,6 +8,7 @@
  */
 
 import { fromHex, toHex } from "./hex.js";
+import { networkOf } from "./networks.js";
 
 /** @typedef {import("./sozu.js").SozuContractIds} SozuContractIds */
 /** @typedef {import("./sozu.js").SozuFeeRate} SozuFeeRate */
@@ -26,6 +27,33 @@ export const SOZU_FN = Object.freeze({
   STAKE: "sozu_stake",
   UNSTAKE: "sozu_unstake",
 });
+
+/**
+ * A stake or an unstake with Sozu: one of the pool's two functions, called
+ * on the network's own pool, or on one its hub named (`pools`, as
+ * `readSozuStatus` gives them in `contracts.pool`). Any other contract with
+ * those functions is someone else's, so it stays strict before the hub has
+ * answered.
+ *
+ * @param {import("./index.js").NetworkRef} net
+ * @param {{ contractId?: string | null, fnName?: string | null }} call
+ * @param {{ pools?: Iterable<string> }} [options]
+ * @returns {boolean}
+ */
+export function isSozuCall(net, call, { pools = [] } = {}) {
+  const sozu = networkOf(net).sozu;
+  /** @param {unknown} id */
+  const idOf = (id) => (typeof id === "string" ? contractIdOf(id.trim()) : null);
+  const id = idOf(call?.contractId);
+
+  if (!sozu || !id || (call?.fnName !== SOZU_FN.STAKE && call?.fnName !== SOZU_FN.UNSTAKE)) {
+    return false;
+  }
+
+  const named = typeof pools === "string" ? [pools] : Array.from(pools ?? []);
+
+  return id === sozu.fallbacks.pool || named.map(idOf).includes(id);
+}
 
 /**
  * Gas for a wallet's own calls of the pool, at the node's price. Under Rusk
