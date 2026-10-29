@@ -205,6 +205,74 @@ describe("check-chain", () => {
     assert.ok(lines.includes(`  ${probes} of ${probes} other contracts are on chain`), lines.join("\n"));
   });
 
+  it("asks the chain a route pays out on whether its payout address is an account that has sent transactions", async () => {
+    const mainnet = {
+      ...networks.mainnet,
+      duskDomains: {
+        .../** @type {NonNullable<typeof networks.mainnet.duskDomains>} */ (networks.mainnet.duskDomains),
+        manifest: {
+          .../** @type {NonNullable<typeof networks.mainnet.duskDomains>} */ (networks.mainnet.duskDomains).manifest,
+          sha256: createHash("sha256").update(MANIFEST).digest("hex"),
+        },
+      },
+    };
+    const sozu = /** @type {NonNullable<typeof mainnet.sozu>} */ (mainnet.sozu).fallbacks;
+    const hub = [sozu.pool, sozu.relayer, sozu.stDusk, sozu.substrate, sozu.vault];
+    const PAYOUT = "0xe6D0c4d8CA2C12b357A5b5470c53E86123Ab16da";
+
+    /**
+     * A node, a manifest host and BSC's RPC, which says `code` and `nonce`.
+     *
+     * @param {{ code?: string, nonce?: string, status?: number }} answer
+     */
+    const bsc = ({ code = "0x", nonce = "0xc67", status = 200 }) => {
+      /** @type {unknown[]} */
+      const sent = [];
+      /** @type {typeof fetch} */
+      const fetch = async (input, init) => {
+        const url = String(input);
+
+        if (url.endsWith("/aggregate")) {
+          return new Response(reply(5_625_312n, [...hub.map((id) => ({ ok: Uint8Array.of(1, ...fromHex(id)) })), ...Array.from({ length: 7 }, () => ({ error: "Unknown" }))]));
+        }
+
+        if (url === "https://bsc-rpc.publicnode.com") {
+          const batch = JSON.parse(String(init?.body));
+
+          sent.push(...batch.map((/** @type {{ method: string, params: unknown[] }} */ c) => [c.method, ...c.params]));
+
+          // Out of order, as a batch may answer.
+          return new Response(JSON.stringify([{ id: 2, jsonrpc: "2.0", result: nonce }, { id: 1, jsonrpc: "2.0", result: code }]), { status });
+        }
+
+        return new Response(MANIFEST);
+      };
+
+      return { fetch, sent };
+    };
+    /** @type {string[]} */
+    const lines = [];
+    const fine = bsc({});
+
+    assert.deepEqual(await checkNetwork(mainnet, { fetch: fine.fetch, log: (line) => lines.push(line) }), []);
+    assert.deepEqual(fine.sent, [
+      ["eth_getCode", PAYOUT, "latest"],
+      ["eth_getTransactionCount", PAYOUT, "latest"],
+    ]);
+    assert.ok(lines.includes(`  dusk-to-bsc pays out from ${PAYOUT}, which has sent 3175 transactions on BNB Smart Chain`), lines.join("\n"));
+
+    for (const [answer, problem] of /** @type {const} */ ([
+      [{ code: "0x6080" }, /is a contract on BNB Smart Chain$/],
+      [{ nonce: "0x0" }, /has sent nothing on BNB Smart Chain$/],
+      [{ status: 503 }, /^BNB Smart Chain didn't say what dusk-to-bsc's payout address .* is: HTTP 503$/],
+    ])) {
+      const problems = await checkNetwork(mainnet, { fetch: bsc(answer).fetch, log: () => {} });
+
+      assert.equal(problems.length, 1, problems.join("\n"));
+      assert.match(problems[0], problem);
+    }
+  });
+
   it("says what differs: another contract named, one gone, a changed manifest", async () => {
     const { fetch } = chain({
       hub: [names[0].replace(/^../, "ff"), ...names.slice(1)],

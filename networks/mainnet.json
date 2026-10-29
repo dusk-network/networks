@@ -88,6 +88,7 @@
         "id": "dusk-to-bsc",
         "chain": "bsc",
         "account": "24jFms4JqYdWb19jFn3CUjNUQz1AeRozYnwsHuUkLbXAj2gRBq598aLAJmqmsaPcsCNJTgTaJTaUZCXpT3s9UeWBsHTmd5hQx95JymZSUsmtwoibiB8AMp4bZjAiLMjmAH3x",
+        "payoutAddress": "0xe6D0c4d8CA2C12b357A5b5470c53E86123Ab16da",
         "feeLux": "1000000000",
         "typicalSeconds": 36000,
         "running": true

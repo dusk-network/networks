@@ -5,66 +5,13 @@
  * @module
  */
 
-import devnet from "../networks/devnet.json" with { type: "json" };
-import mainnet from "../networks/mainnet.json" with { type: "json" };
-import testnet from "../networks/testnet.json" with { type: "json" };
+import { deepFreeze, networkFor, networkOf, networks } from "./networks.js";
 
 /** @typedef {import("./index.js").Network} Network */
 /** @typedef {import("./index.js").NetworkRef} NetworkRef */
 /** @typedef {import("./index.js").Route} Route */
 
-/**
- * @template T
- * @param {T} value
- * @returns {T}
- */
-function deepFreeze(value) {
-  if (value && typeof value === "object" && !Object.isFrozen(value)) {
-    for (const item of Object.values(value)) deepFreeze(item);
-    Object.freeze(value);
-  }
-
-  return value;
-}
-
-/**
- * The schema and the tests hold the files to the `Network` type.
- *
- * @type {Readonly<{ mainnet: Network, testnet: Network, devnet: Network }>}
- */
-export const networks = deepFreeze(
-  /** @type {any} */ ({ mainnet, testnet, devnet })
-);
-
-/**
- * @param {number | bigint | string} chainId
- * @returns {Network | null}
- */
-export function networkFor(chainId) {
-  const digits =
-    typeof chainId === "string" ? /^\s*(?:dusk:)?(\d+)\s*$/.exec(chainId)?.[1] : undefined;
-  const id =
-    typeof chainId === "bigint" ? Number(chainId) : digits === undefined ? chainId : Number(digits);
-
-  return Object.values(networks).find((network) => network.chainId === id) ?? null;
-}
-
-/**
- * @param {unknown} net
- * @returns {Network}
- */
-function networkOf(net) {
-  const network =
-    net && typeof net === "object"
-      ? /** @type {Network} */ (net)
-      : networkFor(/** @type {number | bigint | string} */ (net));
-
-  if (!network || typeof network.chainId !== "number" || !network.display) {
-    throw new TypeError("Not one of the networks");
-  }
-
-  return network;
-}
+export { networkFor, networks };
 
 /**
  * @param {NetworkRef} net
@@ -156,6 +103,7 @@ export function routes(net) {
       from: "dusk",
       id: route.id,
       kind: /** @type {const} */ ("service"),
+      payoutAddress: route.payoutAddress ?? null,
       running: route.running,
       to: route.chain,
       typicalSeconds: route.typicalSeconds,
@@ -179,6 +127,38 @@ export function routes(net) {
   routeCache.set(network, frozen);
 
   return frozen;
+}
+
+/**
+ * The bridge's account on both sides of a transfer: DUSK sent to a service
+ * route's account leaves Dusk on that route; DUSK received from a
+ * migration's payout account is that migration paid out. One account can
+ * be both, as BSC's is on mainnet, so the direction picks.
+ *
+ * @param {NetworkRef} net
+ * @param {string} account
+ * @param {"in" | "out"} direction
+ * @returns {Route | null}
+ */
+export function routeForAccount(net, account, direction) {
+  if (direction !== "in" && direction !== "out") {
+    throw new RangeError('The direction is "in" or "out"');
+  }
+
+  const list = routes(net);
+  const key = typeof account === "string" ? account.trim() : "";
+
+  if (!key) {
+    return null;
+  }
+
+  return (
+    list.find((route) =>
+      direction === "out"
+        ? route.kind === "service" && route.account === key
+        : route.kind === "migration" && route.payoutAccount === key
+    ) ?? null
+  );
 }
 
 /**

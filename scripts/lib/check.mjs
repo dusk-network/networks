@@ -113,6 +113,8 @@ export async function checkNetwork(network, { fetch = globalThis.fetch, log = co
 
   log(`  ${present} of ${probes.length} other contracts are on chain`);
 
+  for (const problem of await checkPayouts(network, { fetch, log })) problems.push(problem);
+
   if (network.duskDomains) {
     const { sha256, url } = network.duskDomains.manifest;
     const manifest = await fetch(url);
@@ -130,3 +132,50 @@ export async function checkNetwork(network, { fetch = globalThis.fetch, log = co
   return problems;
 }
 
+
+/**
+ * Each service route's payout address, on its chain: one JSON-RPC batch
+ * per route asks for its code and its nonce. The address that pays a route
+ * out is an account, which has sent transactions there; one that has sent
+ * none, or a contract, isn't it.
+ *
+ * @param {import("../../src/index.js").Network} network
+ * @param {{ fetch: typeof fetch, log: (line: string) => void }} io
+ * @returns {Promise<string[]>} What differs
+ */
+async function checkPayouts(network, { fetch, log }) {
+  const problems = [];
+
+  for (const route of network.routes.services) {
+    const address = route.payoutAddress;
+    const chain = network.routes.chains[route.chain];
+
+    if (!address) continue;
+
+    const res = await fetch(chain.rpcUrl, {
+      body: JSON.stringify([
+        { id: 1, jsonrpc: "2.0", method: "eth_getCode", params: [address, "latest"] },
+        { id: 2, jsonrpc: "2.0", method: "eth_getTransactionCount", params: [address, "latest"] },
+      ]),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const replies = res.ok ? await res.json().catch(() => null) : null;
+    /** @param {number} id */
+    const result = (id) => (Array.isArray(replies) ? replies.find((reply) => reply?.id === id)?.result : undefined);
+    const code = result(1);
+    const nonce = /^0x[0-9a-f]+$/i.test(String(result(2))) ? BigInt(result(2)) : null;
+
+    if (typeof code !== "string" || nonce === null) {
+      problems.push(`${chain.name} didn't say what ${route.id}'s payout address ${address} is: HTTP ${res.status}`);
+    } else if (code !== "0x") {
+      problems.push(`${route.id}'s payout address ${address} is a contract on ${chain.name}`);
+    } else if (nonce === 0n) {
+      problems.push(`${route.id}'s payout address ${address} has sent nothing on ${chain.name}`);
+    } else {
+      log(`  ${route.id} pays out from ${address}, which has sent ${nonce} transactions on ${chain.name}`);
+    }
+  }
+
+  return problems;
+}

@@ -1,6 +1,6 @@
 {
   "name": "@dusk/networks",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MPL-2.0",
   "exports": {
     ".": "./src/index.js",
@@ -8,6 +8,8 @@
     "./rates": "./src/rates.js",
     "./format": "./src/format.js",
     "./duskevm": "./src/duskevm.js",
+    "./gas": "./src/gas.js",
+    "./account": "./src/account.js",
     "./networks/mainnet.json": "./networks/mainnet.json",
     "./networks/testnet.json": "./networks/testnet.json",
     "./networks/devnet.json": "./networks/devnet.json",

@@ -5,11 +5,12 @@
  *
  * @example
  * ```js
- * import { bridgeLink, labelFor, networkFor, routes } from "@dusk/networks";
+ * import { bridgeLink, labelFor, networkFor, routeForAccount, routes } from "@dusk/networks";
  *
  * const net = networkFor(2); // testnet
  * labelFor(net, "51ced4fad52fc590def2736969c9e3e30013275a996c53714b81d8a08774aa37"); // "Sozu relayer"
  * routes(net).filter((route) => route.running).map((route) => route.id); // ["dusk-to-dusk-evm", "dusk-evm-to-dusk"]
+ * routeForAccount(1, transfer.to, "out")?.id; // "dusk-to-bsc": a transfer to the BSC bridge's account
  * bridgeLink(net, { route: "duskevm" }); // "https://bridge.testnet.dusk.network/#/move/duskevm"
  * ```
  *
@@ -108,6 +109,8 @@ export type Network = Readonly<{
       ChainRoute &
         Readonly<{
           account: Account;
+          /** The address on the chain that pays the route out, where it's known. */
+          payoutAddress: EvmAddress | null;
           /** Lux, as a decimal string. */
           feeLux: string;
         }>
@@ -138,7 +141,8 @@ export type RouteBase = RouteState & Readonly<{ id: string; from: string; to: st
 export type Route =
   | (RouteBase &
       Readonly<{ kind: "migration"; contract: EvmAddress; payoutAccount: Account | null }>)
-  | (RouteBase & Readonly<{ kind: "service"; account: Account; feeLux: bigint }>)
+  | (RouteBase &
+      Readonly<{ kind: "service"; account: Account; payoutAddress: EvmAddress | null; feeLux: bigint }>)
   | (RouteBase & Readonly<{ kind: "duskevm-deposit" | "duskevm-withdrawal" }>);
 
 /** A network, or its chain ID. */
@@ -161,6 +165,19 @@ export declare function isBlocked(net: NetworkRef, account: string): boolean;
 
 /** The network's routes, running or not. */
 export declare function routes(net: NetworkRef): ReadonlyArray<Route>;
+
+/**
+ * The route a transfer with one of the bridge's accounts is on: "out", DUSK
+ * sent to a service route's account; "in", DUSK received from a migration's
+ * payout account. Null for any other account. One account can be both, as
+ * BSC's is on mainnet, so the direction picks. Throws a RangeError for any
+ * other direction.
+ */
+export declare function routeForAccount(
+  net: NetworkRef,
+  account: string,
+  direction: "in" | "out"
+): Route | null;
 
 /**
  * `<bridge>/#/move/<route>?to=<account>`, with `route` a route's ID

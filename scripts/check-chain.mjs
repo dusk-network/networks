@@ -4,7 +4,9 @@
  * Dusk query per network asks Sozu's hub for each contract it names, and
  * calls every other Dusk contract the file names, so one that isn't there
  * shows. One request per network checks Dusk Domains' manifest against its
- * sha256. Nothing is signed or sent.
+ * sha256, and one per route that pays out on another chain asks that chain
+ * whether its payout address is an account that has sent transactions.
+ * Nothing is signed or sent.
  *
  *   node scripts/check-chain.mjs [mainnet] [testnet]
  *

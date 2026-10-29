@@ -5,6 +5,8 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
+/** The JS entry points, each with its declarations. */
+const ENTRIES = [".", "./sozu", "./rates", "./format", "./duskevm", "./gas", "./account"];
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
 describe("the package", () => {
@@ -23,6 +25,8 @@ describe("the package", () => {
       "./rates",
       "./format",
       "./duskevm",
+      "./gas",
+      "./account",
       "./networks/*.json",
       "./schema.json",
       "./fixtures/sozu-vectors.json",
@@ -39,7 +43,7 @@ describe("the package", () => {
       }
     }
 
-    for (const entry of [".", "./sozu", "./rates", "./format", "./duskevm"]) {
+    for (const entry of ENTRIES) {
       assert.match(pkg.exports[entry].types, /\.d\.ts$/);
     }
 
@@ -48,14 +52,20 @@ describe("the package", () => {
     const { formatDusk } = await import("@dusk-network/networks/format");
     const { SOZU_GAS } = await import("@dusk-network/networks/sozu");
     const { nativeRateEstimate } = await import("@dusk-network/networks/rates");
-    const { claimFrom } = await import("@dusk-network/networks/duskevm");
+    const { claimFrom, decodeBridgeCall } = await import("@dusk-network/networks/duskevm");
+    const { TRANSFER_GAS, SOZU_GAS: GAS_SOZU } = await import("@dusk-network/networks/gas");
+    const { isAccount } = await import("@dusk-network/networks/account");
     const { default: testnet } = await import("@dusk-network/networks/networks/testnet.json", { with: { type: "json" } });
 
     assert.equal(networkFor(2)?.duskEvm?.chainId, testnet.duskEvm.chainId);
     assert.equal(typeof formatDusk, "function");
     assert.equal(typeof nativeRateEstimate, "function");
     assert.equal(typeof claimFrom, "function");
+    assert.equal(typeof decodeBridgeCall, "function");
+    assert.equal(typeof isAccount, "function");
     assert.equal(SOZU_GAS.sozu_stake.limit, 5_000_000n);
+    assert.equal(GAS_SOZU, SOZU_GAS);
+    assert.equal(TRANSFER_GAS.limit, 2_500_000n);
   });
 
   it("is the same package on JSR, as @dusk/networks, with the same entry points", () => {
@@ -88,7 +98,7 @@ describe("the package", () => {
   });
 
   it("gives JSR the declarations npm uses, for each JS entry point", () => {
-    for (const entry of [".", "./sozu", "./rates", "./format", "./duskevm"]) {
+    for (const entry of ENTRIES) {
       const { default: file, types } = pkg.exports[entry];
       const first = readFileSync(new URL(`../${file}`, import.meta.url), "utf8").split("\n")[0];
 
@@ -97,9 +107,11 @@ describe("the package", () => {
   });
 
   it("packs only the code, the data, the types and the docs", () => {
-    const [packed] = JSON.parse(
+    // npm 11 prints an array of packages, newer npm an object keyed by name.
+    const report = JSON.parse(
       execFileSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], { cwd: root, encoding: "utf8" })
     );
+    const packed = Array.isArray(report) ? report[0] : report[pkg.name];
 
     assert.deepEqual(packed.files.map((/** @type {{ path: string }} */ f) => f.path).sort(), [
       "CHANGELOG.md",
@@ -111,15 +123,21 @@ describe("the package", () => {
       "networks/testnet.json",
       "package.json",
       "schema.json",
+      "src/account.d.ts",
+      "src/account.js",
+      "src/bls.js",
       "src/duskevm.d.ts",
       "src/duskevm.js",
       "src/format.d.ts",
       "src/format.js",
+      "src/gas.d.ts",
+      "src/gas.js",
       "src/hex.js",
       "src/index.d.ts",
       "src/index.js",
       "src/keccak.js",
       "src/network-file.d.ts",
+      "src/networks.js",
       "src/rates.d.ts",
       "src/rates.js",
       "src/sozu.d.ts",

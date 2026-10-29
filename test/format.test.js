@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  aboutTime,
+  aboutWords,
+  durationWords,
   formatContractId,
   formatDusk,
   formatDuskPlain,
@@ -203,5 +206,43 @@ describe("Keccak-256", () => {
     assert.equal(hex(keccak256(bytes(137))), "a6103b089a404974c2b460048bfddd45108748fbdd9bad451f54d1fe95f8f284");
     assert.equal(hex(keccak256(bytes(272))), "415fd325cae3a2f957fea2770d710027317ced7e7266a59905102c14fdb9959a");
     assert.equal(hex(keccak256(bytes(500))), "3b57ae3adaa5ad96dd75bdfb7df2948b8842d947855d42f5ef338265bb6f5d86");
+  });
+});
+
+describe("times and durations in words", () => {
+  it("rounds an estimate up on a scale that reads at a glance", () => {
+    assert.deepEqual(
+      [45, 172, 600, 660, 3_400, 3_600, 4_000, 5_400, 5_460, 36_000, 608_200].map(aboutTime),
+      ["~1 min", "~3 min", "~10 min", "~15 min", "~1 hour", "~1 hour", "~70 min", "~90 min", "~2 hours", "~10 hours", "~7 days"]
+    );
+    assert.equal(aboutTime(0), "~1 min");
+    assert.equal(aboutTime(36_000n), "~10 hours");
+  });
+
+  it("says an estimate in words", () => {
+    assert.deepEqual(
+      [45, 1_700, 3_600, 4_000, 36_000, 608_200].map(aboutWords),
+      ["about 1 minute", "about 30 minutes", "about 1 hour", "about 70 minutes", "about 10 hours", "about 7 days"]
+    );
+  });
+
+  it("says a duration in whole words, to the minute and down", () => {
+    for (const [seconds, words] of /** @type {const} */ ([
+      [20, "less than a minute"],
+      [59, "less than a minute"],
+      [-5, "less than a minute"],
+      [60, "1 minute"],
+      [61, "1 minute"],
+      [5_400, "1 hour 30 minutes"],
+      [3 * 3_600 + 12 * 60, "3 hours 12 minutes"],
+      [3_600, "1 hour"],
+      [86_400, "1 day"],
+      [90_000, "1 day 1 hour"],
+      [302_400n, "3 days 12 hours"],
+      [604_800n, "7 days"],
+      [5 * 86_400 + 3 * 3_600 + 59, "5 days 3 hours"],
+    ])) {
+      assert.equal(durationWords(seconds), words, String(seconds));
+    }
   });
 });

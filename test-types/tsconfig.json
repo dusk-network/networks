@@ -11,5 +11,5 @@
     "target": "es2022",
     "types": []
   },
-  "files": ["consumer.ts", "../src/index.js", "../src/sozu.js", "../src/rates.js", "../src/format.js", "../src/keccak.js", "../src/duskevm.js"]
+  "files": ["consumer.ts", "../src/index.js", "../src/networks.js", "../src/sozu.js", "../src/rates.js", "../src/format.js", "../src/keccak.js", "../src/duskevm.js", "../src/gas.js", "../src/bls.js", "../src/account.js"]
 }
