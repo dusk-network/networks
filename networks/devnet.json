@@ -9,7 +9,7 @@
   },
   "apps": {
     "wallet": "https://apps.devnet.dusk.network/wallet",
-    "explorer": "https://apps.devnet.dusk.network/explorer",
+    "explorer": "https://explorer.devnet.dusk.network",
     "bridge": null
   },
   "contracts": {

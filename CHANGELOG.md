@@ -2,6 +2,12 @@
 
 All notable changes to this package are listed here. It follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.2]
+
+### Changed
+
+- `apps.explorer`: devnet's explorer on its own domain, `explorer.devnet.dusk.network`
+
 ## [0.3.1]
 
 ### Changed
