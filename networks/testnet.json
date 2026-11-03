@@ -9,7 +9,7 @@
   },
   "apps": {
     "wallet": "https://apps.testnet.dusk.network/wallet",
-    "explorer": "https://apps.testnet.dusk.network/explorer",
+    "explorer": "https://explorer.testnet.dusk.network",
     "bridge": "https://bridge.testnet.dusk.network"
   },
   "contracts": {
