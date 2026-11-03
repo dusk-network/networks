@@ -208,10 +208,11 @@ describe("the network files", () => {
   it("know where the wallet, the explorer and the bridge are", () => {
     assert.deepEqual(networks.mainnet.apps, {
       bridge: "https://bridge.dusk.network",
-      explorer: "https://apps.dusk.network/explorer",
+      explorer: "https://explorer.dusk.network",
       wallet: "https://apps.dusk.network/wallet",
     });
     assert.equal(networks.testnet.apps.wallet, "https://apps.testnet.dusk.network/wallet");
+    assert.equal(networks.testnet.apps.explorer, "https://explorer.testnet.dusk.network");
     assert.equal(networks.testnet.apps.bridge, "https://bridge.testnet.dusk.network");
     assert.equal(networks.devnet.apps.bridge, null);
     assert.equal(networks.devnet.apps.explorer, "https://apps.devnet.dusk.network/explorer");
