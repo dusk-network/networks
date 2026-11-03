@@ -215,7 +215,7 @@ describe("the network files", () => {
     assert.equal(networks.testnet.apps.explorer, "https://explorer.testnet.dusk.network");
     assert.equal(networks.testnet.apps.bridge, "https://bridge.testnet.dusk.network");
     assert.equal(networks.devnet.apps.bridge, null);
-    assert.equal(networks.devnet.apps.explorer, "https://apps.devnet.dusk.network/explorer");
+    assert.equal(networks.devnet.apps.explorer, "https://explorer.devnet.dusk.network");
   });
 
   it("are frozen all the way down", () => {
