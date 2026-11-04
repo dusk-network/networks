@@ -31,7 +31,7 @@ The entry points are the same on both, under each registry's name: `@dusk-networ
 | `@dusk-network/networks/duskevm` | What a call to DuskEVM's bridge does (`decodeBridgeCall`, `decodeWithdrawal`, `duskRecipientOf`, `bridgeEnvelopeOk`), a deposit's arguments (`encodeDepositArgs`, `depositCall`), its contracts (`duskEvmContracts`, `isBridgeContract`, `evmAddressOf`), when a withdrawal can be claimed (`claimFrom`), whether it can be claimed now (`claimReadiness`), the games a proof can go against (`isEligibleGame`), the contracts' clock, and the claim date in words |
 | `@dusk-network/networks/account` | `isAccount`, `accountToRawKey`, `rawKeyToAccount`, `encodeBase58`, `decodeBase58` |
 | `@dusk-network/networks/gas` | Gas for public transfers, DuskEVM deposits and withdrawals (`withdrawalGasLimit`), and Sozu's |
-| `@dusk-network/networks/format` | `formatDusk`, `formatDuskPlain`, `formatTime`, `formatContractId`, `shortAccount`, `formatEvmAddress`, `aboutTime`, `aboutWords`, `durationWords` |
+| `@dusk-network/networks/format` | `formatTime`, `formatContractId`, `shortAccount`, `formatEvmAddress`, `aboutTime`, `aboutWords`, `durationWords` |
 | `@dusk-network/networks/networks/<name>.json` | `mainnet`, `testnet` or `devnet` as data |
 | `@dusk-network/networks/schema.json` | The files' JSON Schema |
 | `@dusk-network/networks/fixtures/sozu-vectors.json` | The Sozu test vectors both wallets run |
@@ -45,12 +45,11 @@ Every entry point has its `.d.ts`. There are no runtime dependencies.
 
 ```js
 import { labelFor, networkFor, routes } from "@dusk-network/networks";
-import { formatDusk, formatTime } from "@dusk-network/networks/format";
+import { formatTime } from "@dusk-network/networks/format";
 
 const net = networkFor(info.chain_id); // null for a chain there's no file for
 labelFor(net, contractId); // "Sozu relayer", or null
 routes(net).filter((route) => route.running);
-formatDusk(fee, { round: "up" }); // { text: "0.0019", exact: "0.001853542" }
 formatTime(blockTime); // "Today, 14:05 CET"
 ```
 
@@ -121,7 +120,6 @@ The files hold the IDs an app starts from. These change without a release, so th
 ## Formats
 
 - Dusk contract IDs are lower-case hex without 0x. EVM addresses carry their EIP-55 checksum.
-- Short amounts have at most 4 decimals, but 2 significant digits under 0.01; exact amounts have all 9, without trailing zeros. Balances round down, fees up. Separators and digits are the locale's.
 - Times are in English, with the locale's clock, a zone name and no seconds unless asked: "Today, 14:05 CET", "26 Oct, 09:12 CET", "Wed 28 Oct 2026, 14:05:09 CET".
 - Accounts and contract IDs are cut to 6 characters at each end, EVM addresses to 0x and 4, and the last 4, with "…".
 - Estimates round up on a scale that reads at a glance ("~15 min", "~10 hours", "~7 days"); durations are whole words, to the minute ("3 days 12 hours").

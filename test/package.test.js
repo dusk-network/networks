@@ -49,7 +49,7 @@ describe("the package", () => {
 
     // The package resolves itself by its own name, as an app would.
     const { networkFor } = await import("@dusk-network/networks");
-    const { formatDusk } = await import("@dusk-network/networks/format");
+    const { formatTime } = await import("@dusk-network/networks/format");
     const { SOZU_GAS } = await import("@dusk-network/networks/sozu");
     const { nativeRateEstimate } = await import("@dusk-network/networks/rates");
     const { claimFrom, decodeBridgeCall } = await import("@dusk-network/networks/duskevm");
@@ -58,7 +58,7 @@ describe("the package", () => {
     const { default: testnet } = await import("@dusk-network/networks/networks/testnet.json", { with: { type: "json" } });
 
     assert.equal(networkFor(2)?.duskEvm?.chainId, testnet.duskEvm.chainId);
-    assert.equal(typeof formatDusk, "function");
+    assert.equal(typeof formatTime, "function");
     assert.equal(typeof nativeRateEstimate, "function");
     assert.equal(typeof claimFrom, "function");
     assert.equal(typeof decodeBridgeCall, "function");
