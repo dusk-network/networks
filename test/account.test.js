@@ -32,7 +32,7 @@ const COMPRESSED_G2_GENERATOR =
 const RAW_G2_GENERATOR =
   "100a9402a28ff2f51a96b48726fbf5b380e52a3eb593a8a1e9ae3c1a9d9994986b36631863b7676fd7bc50439291810506f6239e75c0a9a5c360cdbc9dc5a0aa067886e2187eb13b67b34185ccb61a1b478515f20eedb6c2f3ed6073092a92114a4c4960f80a734c5a9c365e1ffa7c595a630aaa6c85e6e75f490d6ee9b5efbba225eff075a9d307e5da807e8efd83005db064df92fcc0addc61142b0a27aa18a0ebe43b6aacad863aa33dc94e5c4979edca3ca4505817e7f21bde63a1c22b0b00";
 
-// The bridge's: the BSC and Sepolia bridge accounts, a testnet account, and
+// The bridge's: the BSC and test chain bridge accounts, a testnet account, and
 // a withdrawal's recipient.
 const ACCOUNTS = [
   networks.mainnet.routes.services[0].account,

@@ -2,6 +2,16 @@
 
 All notable changes to this package are listed here. It follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.3.3]
+
+### Changed
+
+- Testnet's EVM route: a test chain both ways, BSC's shape, in place of the Sepolia routes that stopped being paid out
+
+### Removed
+
+- Testnet's Sepolia routes, now among its retired contracts
+
 ## [0.3.2]
 
 ### Changed

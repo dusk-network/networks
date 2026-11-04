@@ -163,6 +163,19 @@
   },
   "routes": {
     "chains": {
+      "bsc": {
+        "chainId": 745745,
+        "name": "BSC test chain",
+        "currency": {
+          "name": "Test Ether",
+          "symbol": "ETH",
+          "decimals": 18
+        },
+        "rpcUrl": "https://anvil.testnet.dusk.network",
+        "explorerUrl": "https://anvil.testnet.dusk.network",
+        "token": "0xBCEe5c06Eda885A6471a0E87f513e7492d411B61",
+        "tokenLabel": "BEP20 DUSK"
+      },
       "ethereum": {
         "chainId": 11155111,
         "name": "Sepolia",
@@ -179,23 +192,23 @@
     },
     "migrations": [
       {
-        "id": "ethereum-to-dusk",
-        "chain": "ethereum",
-        "contract": "0x7B1FF96D7edC07D8d83eC2A4da99EF8215a7366B",
-        "payoutAccount": null,
-        "typicalSeconds": null,
-        "running": false
+        "id": "bsc-to-dusk",
+        "chain": "bsc",
+        "contract": "0x93d6e214D07e6A548005deD9a3da589C29f830FE",
+        "payoutAccount": "yUdHBN8BBNiL5X6CWH1u5KdXqq8dBg1JAQiHcJTjvfxBvrVawoqWHqtKNp4gnpgStvWzVrrpB6mA57Jd6q8LQpiAszL3ewjykbNJpJkhR6WrecP7KkBb36hxSP7sgmsoGhq",
+        "typicalSeconds": 30,
+        "running": true
       }
     ],
     "services": [
       {
-        "id": "dusk-to-ethereum",
-        "chain": "ethereum",
-        "account": "25z9o6qCaVk1ReyHjmB4pyXcE3D1vRu4FVV1rR8ChYcosdTSktkANLDHq9GD6B4985Q1S2KrDZYBRrohWAjrNmACFUb3UMSRyYctJRzh3d28R1ZNC1ZyKm1HwXL4FF5Etftt",
-        "payoutAddress": null,
-        "feeLux": "1000000000",
-        "typicalSeconds": null,
-        "running": false
+        "id": "dusk-to-bsc",
+        "chain": "bsc",
+        "account": "yUdHBN8BBNiL5X6CWH1u5KdXqq8dBg1JAQiHcJTjvfxBvrVawoqWHqtKNp4gnpgStvWzVrrpB6mA57Jd6q8LQpiAszL3ewjykbNJpJkhR6WrecP7KkBb36hxSP7sgmsoGhq",
+        "payoutAddress": "0xaDDF28c796715F6749A6eEb03a4B0CEFbD05B9FD",
+        "feeLux": "100000000",
+        "typicalSeconds": 60,
+        "running": true
       }
     ],
     "duskEvm": [
@@ -222,6 +235,11 @@
         "chain": "ethereum",
         "contract": "0x1Bb81fbd735854Ed901aD7Aa1f5F72F64E5841Fc",
         "token": "0xC416f5d2AE6BAec2a23f412Df11166afC35CAba2"
+      },
+      {
+        "chain": "ethereum",
+        "contract": "0x7B1FF96D7edC07D8d83eC2A4da99EF8215a7366B",
+        "token": "0xAced3474eA24f5d77464A0F625dEEB6EaDeE25b8"
       }
     ]
   },
@@ -241,7 +259,7 @@
       "fdbf49102e76cf58224003451c6cb9e3403c54ff1d9042f8bc46ec25c6a4337c": "Sozu stDUSK",
       "0077ecbf88aa20d6d0a6afa20bd26300a2b562fdbac368bf1e3c1325e8555941": "Sozu substrate",
       "79635912e56834fa41aa01048cdb54f7b26756d97b3571345a64df7a0641dfce": "Sozu vault",
-      "25z9o6qCaVk1ReyHjmB4pyXcE3D1vRu4FVV1rR8ChYcosdTSktkANLDHq9GD6B4985Q1S2KrDZYBRrohWAjrNmACFUb3UMSRyYctJRzh3d28R1ZNC1ZyKm1HwXL4FF5Etftt": "Sepolia bridge",
+      "yUdHBN8BBNiL5X6CWH1u5KdXqq8dBg1JAQiHcJTjvfxBvrVawoqWHqtKNp4gnpgStvWzVrrpB6mA57Jd6q8LQpiAszL3ewjykbNJpJkhR6WrecP7KkBb36hxSP7sgmsoGhq": "BSC test chain bridge",
       "1735498c11978854e390894502850916f4ba619e3f4b88c10ef758c5026619cc": "DuskEVM anchor state registry",
       "be5771a80c378903801c768de0ea70eaef26cf9a0b46931ae725bfdc5c7b01cc": "DuskEVM delayed WETH",
       "3b7d562aa0e6b94ce29c5ce2a6f0587ad771afdace86abb0baf66f93e49548cd": "DuskEVM dispute game factory",
