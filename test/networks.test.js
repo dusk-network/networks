@@ -176,22 +176,26 @@ describe("the network files", () => {
     }
   });
 
-  it("run BSC both ways and Ethereum one way on mainnet, and nothing to Sepolia", () => {
+  it("run BSC both ways and Ethereum one way on mainnet, and a test chain both ways on testnet", () => {
     const ids = (/** @type {number} */ chain) =>
       routes(chain).map((route) => `${route.id}${route.running ? "" : " (not running)"}`);
 
     assert.deepEqual(ids(1), ["bsc-to-dusk", "ethereum-to-dusk", "dusk-to-bsc"]);
     assert.deepEqual(ids(2), [
-      "ethereum-to-dusk (not running)",
-      "dusk-to-ethereum (not running)",
+      "bsc-to-dusk",
+      "dusk-to-bsc",
       "dusk-to-dusk-evm",
       "dusk-evm-to-dusk",
     ]);
     assert.deepEqual(ids(3), []);
-    assert.equal(networks.testnet.routes.migrations[0].contract, "0x7B1FF96D7edC07D8d83eC2A4da99EF8215a7366B");
+    assert.equal(networks.testnet.routes.migrations[0].contract, "0x93d6e214D07e6A548005deD9a3da589C29f830FE");
     assert.deepEqual(
       networks.testnet.routes.retired.map((old) => old.contract),
-      ["0x81F15Ed1D87A6C840E410D7740D581e36c661640", "0x1Bb81fbd735854Ed901aD7Aa1f5F72F64E5841Fc"]
+      [
+        "0x81F15Ed1D87A6C840E410D7740D581e36c661640",
+        "0x1Bb81fbd735854Ed901aD7Aa1f5F72F64E5841Fc",
+        "0x7B1FF96D7edC07D8d83eC2A4da99EF8215a7366B",
+      ]
     );
   });
 
@@ -313,15 +317,15 @@ describe("routes", () => {
     assert.equal(withdrawal.chain.chainId, 745);
   });
 
-  it("names the address that pays a route out where it's known: BSC's on mainnet, none on testnet", () => {
+  it("names the address that pays a route out: BSC's on mainnet, the test chain's on testnet", () => {
     const [, , bscOut] = routes(1);
-    const [, sepoliaOut] = routes(2);
+    const [, testOut] = routes(2);
 
-    assert.ok(bscOut.kind === "service" && sepoliaOut.kind === "service");
+    assert.ok(bscOut.kind === "service" && testOut.kind === "service");
     // The sender of the BEP20 DUSK payouts of Dusk → BSC transfers, as BSC's
     // logs show it (two payouts checked, 28 Oct 2026).
     assert.equal(bscOut.payoutAddress, "0xe6D0c4d8CA2C12b357A5b5470c53E86123Ab16da");
-    assert.equal(sepoliaOut.payoutAddress, null);
+    assert.equal(testOut.payoutAddress, "0xaDDF28c796715F6749A6eEb03a4B0CEFbD05B9FD");
   });
 
   it("gives the same frozen list each time", () => {
@@ -358,7 +362,7 @@ describe("bridgeLink", () => {
   });
 
   it("has no link to a route the network doesn't have", () => {
-    assert.equal(bridgeLink(published(networks.testnet), { route: "bsc" }), null);
+    assert.equal(bridgeLink(published(networks.testnet), { route: "ethereum" }), null);
     assert.equal(bridgeLink(published(networks.mainnet), { route: "dusk-to-dusk-evm" }), null);
     assert.equal(bridgeLink(published(networks.devnet), { route: "migrate" }), null);
   });
@@ -386,7 +390,7 @@ describe("bridgeLink", () => {
 
 describe("routeForAccount", () => {
   const [bscIn, ethereumIn, bscOut] = routes(1);
-  const [, sepoliaOut] = routes(2);
+  const [, testOut] = routes(2);
   const BSC = bscOut.kind === "service" ? bscOut.account : "";
   const BSC_PAYOUTS = bscIn.kind === "migration" ? String(bscIn.payoutAccount) : "";
   const ETHEREUM_PAYOUTS = ethereumIn.kind === "migration" ? String(ethereumIn.payoutAccount) : "";
@@ -397,8 +401,7 @@ describe("routeForAccount", () => {
     assert.equal(routeForAccount(networks.mainnet, ` ${ETHEREUM_PAYOUTS}\n`, "in"), ethereumIn);
     assert.equal(routeForAccount(1, BSC, "out")?.chain.name, "BNB Smart Chain");
     assert.equal(routeForAccount(1, ETHEREUM_PAYOUTS, "in")?.chain.name, "Ethereum");
-    // Testnet's route to Sepolia, which doesn't run, still has its transfers.
-    assert.equal(routeForAccount(2, sepoliaOut.kind === "service" ? sepoliaOut.account : "", "out")?.chain.name, "Sepolia");
+    assert.equal(routeForAccount(2, testOut.kind === "service" ? testOut.account : "", "out")?.chain.name, "BSC test chain");
   });
 
   it("tells BSC's account apart by the direction: it pays BSC's migrations out and takes transfers to BSC", () => {
