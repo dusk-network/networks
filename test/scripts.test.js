@@ -204,8 +204,8 @@ describe("check-chain", () => {
     assert.deepEqual(problems, []);
     assert.deepEqual(asked, [
       "POST https://testnet.nodes.dusk.network/on/contracts:93de287b7d349d678a0038fe7772e8960e1a84a1b5da2d0b1f62f532616ce1d4/aggregate",
-      "GET https://testnet.dusk.domains/manifest.json",
       "POST https://anvil.testnet.dusk.network",
+      "GET https://testnet.dusk.domains/manifest.json",
     ]);
     assert.ok(lines.includes(`  ${probes} of ${probes} other contracts are on chain`), lines.join("\n"));
   });
