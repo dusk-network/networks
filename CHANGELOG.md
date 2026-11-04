@@ -2,6 +2,12 @@
 
 All notable changes to this package are listed here. It follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Removed
+
+- `formatDusk` and `formatDuskPlain`, from `/format`: they're in `@dusk-network/app-core/amounts`
+
 ## [0.3.3]
 
 ### Changed

@@ -1,12 +1,12 @@
 /**
- * How the Dusk apps write amounts, times, durations and IDs, with Intl only.
- * The locale and the time zone default to the browser's.
+ * How the Dusk apps write times, durations and IDs, with Intl only. The locale
+ * and the time zone default to the browser's. Amounts are in
+ * `@dusk/app-core/amounts`.
  *
  * @example
  * ```js
- * import { aboutTime, durationWords, formatContractId, formatDusk, formatTime } from "@dusk/networks/format";
+ * import { aboutTime, durationWords, formatContractId, formatTime } from "@dusk/networks/format";
  *
- * formatDusk(1_853_542n, { round: "up" }); // { text: "0.0019", exact: "0.001853542" }
  * formatTime(Date.now(), { locale: "nl-NL", timeZone: "Europe/Amsterdam" }); // "Today, 14:05 CET"
  * formatContractId("0x93DE…", { short: true }); // "93de28…6ce1d4"
  * aboutTime(36_000); // "~10 hours": a route's usual time
@@ -15,25 +15,6 @@
  *
  * @module
  */
-
-/**
- * An amount of DUSK from lux. `short` (the default): at most 4 decimals, but
- * 2 significant digits under 0.01, and never 0 for an amount that isn't;
- * `exact`: all 9, trailing zeros trimmed. Round `down` for balances, `up`
- * for fees. The locale's separators and digits; `exact` is always the whole
- * amount, for a title or a tap to reveal it.
- */
-export declare function formatDusk(
-  lux: bigint | number | string,
-  options?: {
-    mode?: "short" | "exact";
-    round?: "down" | "up" | "nearest";
-    locale?: string;
-  }
-): { text: string; exact: string };
-
-/** Every decimal, a point and no grouping: for a file or an input's value. */
-export declare function formatDuskPlain(lux: bigint | number | string): string;
 
 /**
  * "Today, 14:05 CET", "26 Oct, 09:12 CET", or with `date: "full"`, "Wed 28
